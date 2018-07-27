@@ -25,7 +25,6 @@
   "keywords": [
     "ocaml",
     "reason",
-    "bucklescript",
     "reasonml",
     "merlin",
     "imandra"
@@ -379,10 +378,5 @@
     "vscode-languageclient": "4.0.1",
     "vscode-languageserver": "4.0.0",
     "vscode-languageserver-protocol": "3.6.0"
-  },
-  "__metadata": {
-    "id": "c7ccccce-e272-43df-883f-91f3de932890",
-    "publisherDisplayName": "Darin Morrison",
-    "publisherId": "d7d46b7f-d6a6-4bc5-8e41-f35d145c81de"
   }
 }
