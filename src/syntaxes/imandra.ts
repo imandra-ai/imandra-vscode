@@ -23,7 +23,7 @@ const {
   ref,
   seq,
   set,
-  words,
+  words
 } = basis;
 
 export class OCaml implements basis.ILanguage {
@@ -42,8 +42,8 @@ export class OCaml implements basis.ILanguage {
         Token.RIGHT_CURLY_BRACKET,
         Token.RIGHT_PARENTHESIS,
         Token.RIGHT_SQUARE_BRACKET,
-        words(group(alt(...this.declEndTokens()))),
-      ),
+        words(group(alt(...this.declEndTokens())))
+      )
     );
   }
 
@@ -59,9 +59,9 @@ export class OCaml implements basis.ILanguage {
           Token.RIGHT_CURLY_BRACKET,
           Token.RIGHT_PARENTHESIS,
           Token.RIGHT_SQUARE_BRACKET,
-          words(group(alt(...this.declEndTokens()))),
-        ),
-      ),
+          words(group(alt(...this.declEndTokens())))
+        )
+      )
     );
   }
 
@@ -71,8 +71,10 @@ export class OCaml implements basis.ILanguage {
         Token.RIGHT_CURLY_BRACKET,
         Token.RIGHT_PARENTHESIS,
         Token.RIGHT_SQUARE_BRACKET,
-        words(group(alt(...this.declEndTokens().filter(x => !elems.includes(x))))),
-      ),
+        words(
+          group(alt(...this.declEndTokens().filter(x => !elems.includes(x))))
+        )
+      )
     );
   }
 
@@ -95,7 +97,7 @@ export class OCaml implements basis.ILanguage {
       Token.MODULE,
       Token.OPEN,
       Token.TYPE,
-      Token.VAL,
+      Token.VAL
     ];
   }
 
@@ -104,27 +106,30 @@ export class OCaml implements basis.ILanguage {
       begin: seq(
         capture(Token.LEFT_SQUARE_BRACKET),
         many(set(Class.space)),
-        capture(this.ops(`${Token.COMMERCIAL_AT}{1,3}`)),
+        capture(this.ops(`${Token.COMMERCIAL_AT}{1,3}`))
       ),
       end: Token.RIGHT_SQUARE_BRACKET,
       beginCaptures: {
         1: { name: Scope.TERM_CONSTRUCTOR() },
-        2: { name: Scope.STYLE_OPERATOR() },
+        2: { name: Scope.STYLE_OPERATOR() }
       },
       endCaptures: {
-        0: { name: Scope.TERM_CONSTRUCTOR() },
+        0: { name: Scope.TERM_CONSTRUCTOR() }
       },
-      patterns: [include(this.attributePayload)],
+      patterns: [include(this.attributePayload)]
     };
   }
 
   public attributeIdentifier(): schema.Rule {
     return {
-      match: seq(capture(this.ops(Token.PERCENT_SIGN)), capture(this.identLower())),
+      match: seq(
+        capture(this.ops(Token.PERCENT_SIGN)),
+        capture(this.identLower())
+      ),
       captures: {
         1: { name: Scope.PUNCTUATION_PERCENT_SIGN() },
-        2: { name: Scope.STYLE_DELIMITER() },
-      },
+        2: { name: Scope.STYLE_DELIMITER() }
+      }
     };
   }
 
@@ -133,16 +138,19 @@ export class OCaml implements basis.ILanguage {
       patterns: [
         {
           begin: this.lastOps(Token.PERCENT_SIGN),
-          end: alt(capture(this.ops(set(Token.COLON, Token.QUESTION_MARK))), lookBehind(set(Class.space))),
+          end: alt(
+            capture(this.ops(set(Token.COLON, Token.QUESTION_MARK))),
+            lookBehind(set(Class.space))
+          ),
           endCaptures: {
-            1: { name: Scope.STYLE_OPERATOR() },
+            1: { name: Scope.STYLE_OPERATOR() }
           },
-          patterns: [include(this.pathModuleExtended), include(this.pathRecord)],
+          patterns: [include(this.pathModuleExtended), include(this.pathRecord)]
         },
         {
           begin: this.lastOps(Token.COLON),
           end: lookAhead(Token.RIGHT_SQUARE_BRACKET),
-          patterns: [include(this.signature), include(this.type)],
+          patterns: [include(this.signature), include(this.type)]
         },
         {
           begin: this.lastOps(Token.QUESTION_MARK),
@@ -150,21 +158,24 @@ export class OCaml implements basis.ILanguage {
           patterns: [
             {
               begin: this.lastOps(Token.QUESTION_MARK),
-              end: alt(lookAhead(Token.RIGHT_SQUARE_BRACKET), words(Token.WHEN)),
+              end: alt(
+                lookAhead(Token.RIGHT_SQUARE_BRACKET),
+                words(Token.WHEN)
+              ),
               endCaptures: {
-                1: { name: Scope.STYLE_OPERATOR },
+                1: { name: Scope.STYLE_OPERATOR }
               },
-              patterns: [include(this.pattern)],
+              patterns: [include(this.pattern)]
             },
             {
               begin: lastWords(Token.WHEN),
               end: lookAhead(Token.RIGHT_SQUARE_BRACKET),
-              patterns: [include(this.term)],
-            },
-          ],
+              patterns: [include(this.term)]
+            }
+          ]
         },
-        include(this.term),
-      ],
+        include(this.term)
+      ]
     };
   }
 
@@ -174,13 +185,18 @@ export class OCaml implements basis.ILanguage {
         Token.REVERSE_SOLIDUS,
         group(
           alt(
-            set(Token.REVERSE_SOLIDUS, Token.QUOTATION_MARK, ...rest, ...["n", "t", "b", "r"]),
+            set(
+              Token.REVERSE_SOLIDUS,
+              Token.QUOTATION_MARK,
+              ...rest,
+              ...["n", "t", "b", "r"]
+            ),
             seq(set(Class.digit), set(Class.digit), set(Class.digit)),
             seq("x", set(Class.xdigit), set(Class.xdigit)),
-            seq("o", set("0-3"), set("0-7"), set("0-7")),
-          ),
-        ),
-      ),
+            seq("o", set("0-3"), set("0-7"), set("0-7"))
+          )
+        )
+      )
     };
   }
 
@@ -191,8 +207,8 @@ export class OCaml implements basis.ILanguage {
         Token.RIGHT_CURLY_BRACKET,
         Token.RIGHT_PARENTHESIS,
         Token.RIGHT_SQUARE_BRACKET,
-        words(group(alt(...this.declEndTokens()))),
-      ),
+        words(group(alt(...this.declEndTokens())))
+      )
     );
   }
 
@@ -202,59 +218,68 @@ export class OCaml implements basis.ILanguage {
         begin: words(Token.FUNCTOR),
         end: this.declEnd(),
         beginCaptures: {
-          0: { name: Scope.STYLE_KEYWORD() },
+          0: { name: Scope.STYLE_KEYWORD() }
         },
         patterns: [
           {
             begin: lastWords(Token.FUNCTOR),
             end: alt(
               capture(seq(Token.LEFT_PARENTHESIS, Token.RIGHT_PARENTHESIS)),
-              capture(seq(Token.LEFT_PARENTHESIS, negativeLookAhead(Token.RIGHT_PARENTHESIS))),
+              capture(
+                seq(
+                  Token.LEFT_PARENTHESIS,
+                  negativeLookAhead(Token.RIGHT_PARENTHESIS)
+                )
+              )
             ),
             endCaptures: {
               1: { name: Scope.TERM_CONSTRUCTOR() },
-              2: { name: Scope.STYLE_DELIMITER() },
-            },
+              2: { name: Scope.STYLE_DELIMITER() }
+            }
           },
           {
             begin: lookBehind(Token.LEFT_PARENTHESIS),
             end: alt(capture(Token.COLON), capture(Token.RIGHT_PARENTHESIS)),
             endCaptures: {
               1: { name: Scope.PUNCTUATION_COLON() },
-              2: { name: Scope.STYLE_DELIMITER() },
+              2: { name: Scope.STYLE_DELIMITER() }
             },
-            patterns: [include(this.variableModule)],
+            patterns: [include(this.variableModule)]
           },
           {
             begin: this.lastOps(Token.COLON),
             end: Token.RIGHT_PARENTHESIS,
             endCaptures: {
-              0: { name: Scope.STYLE_DELIMITER() },
+              0: { name: Scope.STYLE_DELIMITER() }
             },
-            patterns: [include(this.signature)],
+            patterns: [include(this.signature)]
           },
           {
             begin: lookBehind(Token.RIGHT_PARENTHESIS),
             end: alt(
               capture(Token.LEFT_PARENTHESIS),
-              capture(this.ops(seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN))),
+              capture(
+                this.ops(seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN))
+              )
             ),
             endCaptures: {
               1: { name: Scope.STYLE_DELIMITER() },
-              2: { name: Scope.PUNCTUATION_EQUALS() },
-            },
+              2: { name: Scope.PUNCTUATION_EQUALS() }
+            }
           },
           {
-            begin: this.lastOps(seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN)),
+            begin: this.lastOps(
+              seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN)
+            ),
             end: this.declEnd(),
-            patterns: [include(ruleBody)],
-          },
-        ],
+            patterns: [include(ruleBody)]
+          }
+        ]
       },
       {
         match: this.ops(seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN)),
-        name: Scope.PUNCTUATION_EQUALS(),
-      },
+        name: Scope.PUNCTUATION_EQUALS()
+      }
     ];
   }
 
@@ -272,15 +297,15 @@ export class OCaml implements basis.ILanguage {
                 alt(
                   ...Object.keys(Token)
                     .filter(key => key !== "LOW_LINE")
-                    .map(key => (Token as any)[key]),
-                ),
-              ),
+                    .map(key => (Token as any)[key])
+                )
+              )
             ),
-            group(alt(complement(Token.APOSTROPHE), `$`)),
-          ),
+            group(alt(complement(Token.APOSTROPHE), `$`))
+          )
         ),
-        seq(this.boundary(), lookAhead(set(Class.lower, `_`)), this.ident()),
-      ),
+        seq(this.boundary(), lookAhead(set(Class.lower, `_`)), this.ident())
+      )
     );
   }
 
@@ -296,29 +321,37 @@ export class OCaml implements basis.ILanguage {
               group(
                 alt(
                   ...Object.keys(Token)
-                    .filter(key => key !== "LOW_LINE" && key !== "NEW" && key !== "MODULE")
-                    .map(key => (Token as any)[key]),
-                ),
-              ),
+                    .filter(
+                      key =>
+                        key !== "LOW_LINE" && key !== "NEW" && key !== "MODULE"
+                    )
+                    .map(key => (Token as any)[key])
+                )
+              )
             ),
-            group(alt(complement(Token.APOSTROPHE), `$`)),
-          ),
+            group(alt(complement(Token.APOSTROPHE), `$`))
+          )
         ),
-        seq(this.boundary(), lookAhead(set(Class.lower, `_`)), this.ident()),
-      ),
+        seq(this.boundary(), lookAhead(set(Class.lower, `_`)), this.ident())
+      )
     );
   }
 
   public identUpper(): string {
-    return group(seq(seq(this.boundary(), lookAhead(set(Class.upper)), this.ident())));
+    return group(
+      seq(seq(this.boundary(), lookAhead(set(Class.upper)), this.ident()))
+    );
   }
 
   public parens(ruleLHS: string, ruleRHS: string): schema.Rule {
     return {
-      begin: seq(Token.LEFT_PARENTHESIS, negativeLookAhead(Token.RIGHT_PARENTHESIS)),
+      begin: seq(
+        Token.LEFT_PARENTHESIS,
+        negativeLookAhead(Token.RIGHT_PARENTHESIS)
+      ),
       end: Token.RIGHT_PARENTHESIS,
       captures: {
-        0: { name: Scope.STYLE_DELIMITER() },
+        0: { name: Scope.STYLE_DELIMITER() }
       },
       patterns: [
         { include: `#comment` },
@@ -326,12 +359,12 @@ export class OCaml implements basis.ILanguage {
           begin: this.ops(Token.COLON),
           end: lookAhead(Token.RIGHT_PARENTHESIS),
           beginCaptures: {
-            0: { name: Scope.PUNCTUATION_COLON() },
+            0: { name: Scope.PUNCTUATION_COLON() }
           },
-          patterns: [{ include: ruleRHS }],
+          patterns: [{ include: ruleRHS }]
         },
-        { include: ruleLHS },
-      ],
+        { include: ruleLHS }
+      ]
     };
   }
 
@@ -340,10 +373,13 @@ export class OCaml implements basis.ILanguage {
       patterns: [
         {
           begin: lastWords(Token.AND, Token.CLASS, Token.TYPE),
-          end: alt(this.ops(alt(capture(Token.COLON), capture(Token.EQUALS_SIGN))), this.declEnd()),
+          end: alt(
+            this.ops(alt(capture(Token.COLON), capture(Token.EQUALS_SIGN))),
+            this.declEnd()
+          ),
           endCaptures: {
             1: { name: Scope.PUNCTUATION_COLON() },
-            2: { name: Scope.PUNCTUATION_EQUALS() },
+            2: { name: Scope.PUNCTUATION_EQUALS() }
           },
           patterns: [
             {
@@ -352,45 +388,45 @@ export class OCaml implements basis.ILanguage {
                 lookAhead(
                   alt(
                     seq(this.identLower(), many(set(Class.space)), Token.COMMA),
-                    complement(Class.space, Class.lower, Token.PERCENT_SIGN),
-                  ),
+                    complement(Class.space, Class.lower, Token.PERCENT_SIGN)
+                  )
                 ),
                 this.identLower(),
-                lookAhead(words(Token.TYPE)),
+                lookAhead(words(Token.TYPE))
               ),
               endCaptures: {
-                0: { name: Scope.NAME_FUNCTION() },
+                0: { name: Scope.NAME_FUNCTION() }
               },
-              patterns: [include(this.attributeIdentifier)],
+              patterns: [include(this.attributeIdentifier)]
             },
             {
               begin: Token.LEFT_SQUARE_BRACKET,
               end: Token.RIGHT_SQUARE_BRACKET,
               captures: {
-                0: { name: Scope.STYLE_DELIMITER() },
+                0: { name: Scope.STYLE_DELIMITER() }
               },
-              patterns: [include(this.type)],
+              patterns: [include(this.type)]
             },
-            include(this.bindTermArgs),
-          ],
+            include(this.bindTermArgs)
+          ]
         },
         {
           begin: this.lastOps(Token.COLON),
           end: alt(this.ops(Token.EQUALS_SIGN), this.declEndSans(Token.TYPE)),
           endCaptures: {
-            0: { name: Scope.PUNCTUATION_EQUALS() },
+            0: { name: Scope.PUNCTUATION_EQUALS() }
           },
-          patterns: [include(this.literalClassType)],
+          patterns: [include(this.literalClassType)]
         },
         {
           begin: this.lastOps(Token.EQUALS_SIGN),
           end: alt(words(Token.AND), this.declEnd()),
           endCaptures: {
-            0: { name: Scope.ITEM_AND() },
+            0: { name: Scope.ITEM_AND() }
           },
-          patterns: [...rest],
-        },
-      ],
+          patterns: [...rest]
+        }
+      ]
     };
   }
 
@@ -408,24 +444,28 @@ export class OCaml implements basis.ILanguage {
         {
           begin: alt(
             lastWords(Token.EXCEPTION),
-            this.lastOps(seq(Token.PLUS_SIGN, Token.EQUALS_SIGN), Token.EQUALS_SIGN, Token.VERTICAL_LINE),
+            this.lastOps(
+              seq(Token.PLUS_SIGN, Token.EQUALS_SIGN),
+              Token.EQUALS_SIGN,
+              Token.VERTICAL_LINE
+            )
           ),
           end: alt(
             capture(Token.COLON),
             capture(words(Token.OF)),
             capture(this.ops(Token.VERTICAL_LINE)),
-            this.declEnd(),
+            this.declEnd()
           ),
           endCaptures: {
             1: { name: Scope.PUNCTUATION_COLON() },
             2: { name: Scope.STYLE_DELIMITER() },
-            3: { name: Scope.VERTICAL_LINE() },
+            3: { name: Scope.VERTICAL_LINE() }
           },
           patterns: [
             include(this.attributeIdentifier),
             {
               match: seq(Token.FULL_STOP, Token.FULL_STOP),
-              name: Scope.STYLE_OPERATOR(),
+              name: Scope.STYLE_OPERATOR()
             },
             {
               match: seq(
@@ -433,24 +473,29 @@ export class OCaml implements basis.ILanguage {
                 negativeLookAhead(
                   seq(
                     many(set(Class.space)),
-                    group(alt(Token.FULL_STOP, seq(Token.LEFT_PARENTHESIS, complement(Token.ASTERISK)))),
-                  ),
-                ),
+                    group(
+                      alt(
+                        Token.FULL_STOP,
+                        seq(Token.LEFT_PARENTHESIS, complement(Token.ASTERISK))
+                      )
+                    )
+                  )
+                )
               ),
-              name: Scope.TERM_CONSTRUCTOR(),
+              name: Scope.TERM_CONSTRUCTOR()
             },
-            include(this.type),
-          ],
+            include(this.type)
+          ]
         },
         {
           begin: alt(this.lastOps(Token.COLON), lastWords(Token.OF)),
           end: alt(this.ops(Token.VERTICAL_LINE), this.declEnd()),
           endCaptures: {
-            0: { name: Scope.VERTICAL_LINE() },
+            0: { name: Scope.VERTICAL_LINE() }
           },
-          patterns: [include(this.type)],
-        },
-      ],
+          patterns: [include(this.type)]
+        }
+      ]
     };
   }
 
@@ -462,19 +507,19 @@ export class OCaml implements basis.ILanguage {
           begin: lastWords(Token.TYPE),
           end: this.ops(Token.EQUALS_SIGN),
           endCaptures: {
-            0: { name: Scope.PUNCTUATION_EQUALS() },
+            0: { name: Scope.PUNCTUATION_EQUALS() }
           },
-          patterns: [include(this.comment), include(this.pathModuleExtended)],
+          patterns: [include(this.comment), include(this.pathModuleExtended)]
         },
         {
           begin: this.lastOps(Token.EQUALS_SIGN),
           end: alt(words(Token.AND), this.declEnd()),
           endCaptures: {
-            0: { name: Scope.ITEM_AND() },
+            0: { name: Scope.ITEM_AND() }
           },
-          patterns: [include(this.signature)],
-        },
-      ],
+          patterns: [include(this.signature)]
+        }
+      ]
     };
   }
 
@@ -488,49 +533,59 @@ export class OCaml implements basis.ILanguage {
             this.ops(
               alt(
                 capture(seq(Token.COLON, negativeLookAhead(Token.EQUALS_SIGN))),
-                capture(seq(opt(Token.COLON), Token.EQUALS_SIGN)),
-              ),
+                capture(seq(opt(Token.COLON), Token.EQUALS_SIGN))
+              )
             ),
-            this.declEndSans(Token.MODULE),
+            this.declEndSans(Token.MODULE)
           ),
           endCaptures: {
             1: { name: Scope.PUNCTUATION_COLON() },
-            2: { name: Scope.PUNCTUATION_EQUALS() },
+            2: { name: Scope.PUNCTUATION_EQUALS() }
           },
           // FIXME: parse in order
           patterns: [
             include(this.comment),
             {
               match: words(Token.MODULE),
-              name: Scope.TERM_MODULE(),
+              name: Scope.TERM_MODULE()
             },
             {
               match: this.identUpper(),
-              name: Scope.NAME_FUNCTION(),
+              name: Scope.NAME_FUNCTION()
             },
             this.parens(ref(this.variableModule), ref(this.signature)),
-            include(this.literalUnit),
-          ],
+            include(this.literalUnit)
+          ]
         },
         {
           begin: this.lastOps(Token.COLON),
-          end: alt(words(capture(Token.AND)), capture(this.ops(Token.EQUALS_SIGN)), this.declEnd()),
+          end: alt(
+            words(capture(Token.AND)),
+            capture(this.ops(Token.EQUALS_SIGN)),
+            this.declEnd()
+          ),
           endCaptures: {
             1: { name: Scope.ITEM_AND() },
-            2: { name: Scope.PUNCTUATION_EQUALS() },
+            2: { name: Scope.PUNCTUATION_EQUALS() }
           },
-          patterns: [include(this.signature)],
+          patterns: [include(this.signature)]
         },
         {
-          begin: this.lastOps(seq(Token.COLON, Token.EQUALS_SIGN), Token.EQUALS_SIGN),
-          end: alt(words(group(alt(capture(Token.AND), capture(Token.WITH)))), this.declEnd()),
+          begin: this.lastOps(
+            seq(Token.COLON, Token.EQUALS_SIGN),
+            Token.EQUALS_SIGN
+          ),
+          end: alt(
+            words(group(alt(capture(Token.AND), capture(Token.WITH)))),
+            this.declEnd()
+          ),
           endCaptures: {
             1: { name: Scope.ITEM_AND() },
-            2: { name: Scope.SIGNATURE_WITH() },
+            2: { name: Scope.SIGNATURE_WITH() }
           },
-          patterns: [include(this.structure)],
-        },
-      ],
+          patterns: [include(this.structure)]
+        }
+      ]
     };
   }
 
@@ -542,94 +597,120 @@ export class OCaml implements basis.ILanguage {
     return {
       patterns: [
         {
-          begin: alt(this.lastOps("!"), lastWords(Token.AND, Token.EXTERNAL, Token.LET, Token.METHOD, Token.VAL)),
+          begin: alt(
+            this.lastOps("!"),
+            lastWords(
+              Token.AND,
+              Token.EXTERNAL,
+              Token.LET,
+              Token.METHOD,
+              Token.VAL
+            )
+          ),
           end: alt(
             capture(words(Token.MODULE)),
             capture(words(Token.OPEN)),
-            this.ops(alt(capture(Token.COLON), capture(this.ops(alt(...startBody))))),
-            this.declEnd(),
+            this.ops(
+              alt(capture(Token.COLON), capture(this.ops(alt(...startBody))))
+            ),
+            this.declEnd()
           ),
           endCaptures: {
             1: { name: Scope.TERM_MODULE() },
             2: { name: Scope.ITEM_OPEN() },
             3: { name: Scope.PUNCTUATION_COLON() },
-            4: { name: Scope.PUNCTUATION_EQUALS() },
+            4: { name: Scope.PUNCTUATION_EQUALS() }
           },
           patterns: [
             {
-              begin: alt(this.lastOps("!"), lastWords(Token.AND, Token.EXTERNAL, Token.LET, Token.METHOD, Token.VAL)),
+              begin: alt(
+                this.lastOps("!"),
+                lastWords(
+                  Token.AND,
+                  Token.EXTERNAL,
+                  Token.LET,
+                  Token.METHOD,
+                  Token.VAL
+                )
+              ),
               end: alt(
                 lookAhead(words(group(alt(Token.MODULE, Token.OPEN)))),
                 lookAhead(
                   alt(
                     seq(this.identLower(), many(set(Class.space)), Token.COMMA),
-                    complement(Class.space, Class.lower, Token.PERCENT_SIGN),
-                  ),
+                    complement(Class.space, Class.lower, Token.PERCENT_SIGN)
+                  )
                 ),
                 capture(words(Token.REC)),
-                capture(this.identLower()),
+                capture(this.identLower())
               ),
               endCaptures: {
                 1: { name: Scope.KEYWORD_REC() },
-                2: { name: Scope.NAME_FUNCTION() },
+                2: { name: Scope.NAME_FUNCTION() }
               },
-              patterns: [include(this.attributeIdentifier), include(this.comment)],
+              patterns: [
+                include(this.attributeIdentifier),
+                include(this.comment)
+              ]
             },
             {
               begin: lastWords(Token.REC),
-              end: alt(capture(this.identLower()), lookAhead(complement(Class.space, Class.alpha))),
+              end: alt(
+                capture(this.identLower()),
+                lookAhead(complement(Class.space, Class.alpha))
+              ),
               endCaptures: {
-                0: { name: Scope.NAME_FUNCTION() },
+                0: { name: Scope.NAME_FUNCTION() }
               },
-              patterns: [include(this.bindTermArgs)],
+              patterns: [include(this.bindTermArgs)]
             },
-            include(this.bindTermArgs),
-          ],
+            include(this.bindTermArgs)
+          ]
         },
         {
           begin: lastWords(Token.MODULE),
           end: this.declEnd(),
-          patterns: [include(this.declModule)],
+          patterns: [include(this.declModule)]
         },
         {
           begin: lastWords(Token.OPEN),
           end: this.declEndItemWith(lookAhead(words(Token.IN))),
-          patterns: [include(this.pathModuleSimple)],
+          patterns: [include(this.pathModuleSimple)]
         },
         {
           begin: this.lastOps(Token.COLON),
           end: alt(this.ops(alt(...startBody)), this.declEnd()),
           endCaptures: {
-            0: { name: Scope.PUNCTUATION_EQUALS() },
+            0: { name: Scope.PUNCTUATION_EQUALS() }
           },
           patterns: [
             {
               begin: this.lastOps(Token.COLON),
               end: alt(words(Token.TYPE), lookAhead(complement(Class.space))),
               endCaptures: {
-                0: { name: Scope.STYLE_CONTROL() },
-              },
+                0: { name: Scope.STYLE_CONTROL() }
+              }
             },
             {
               begin: lastWords(Token.TYPE),
               end: this.ops(Token.FULL_STOP),
               endCaptures: {
-                0: { name: Scope.STYLE_OPERATOR() },
+                0: { name: Scope.STYLE_OPERATOR() }
               },
-              patterns: [include(this.pattern)],
+              patterns: [include(this.pattern)]
             },
-            include(this.type),
-          ],
+            include(this.type)
+          ]
         },
         {
           begin: this.lastOps(...startBody),
           end: alt(words(Token.AND), this.declEnd()),
           endCaptures: {
-            0: { name: Scope.ITEM_AND() },
+            0: { name: Scope.ITEM_AND() }
           },
-          patterns: [include(this.term)],
-        },
-      ],
+          patterns: [include(this.term)]
+        }
+      ]
     };
   }
 
@@ -641,61 +722,67 @@ export class OCaml implements basis.ILanguage {
           end: alt(Token.COLON, lookAhead(complement(Class.space))),
           applyEndPatternLast: true,
           beginCaptures: {
-            0: { name: Scope.STYLE_OPERATOR() },
+            0: { name: Scope.STYLE_OPERATOR() }
           },
           endCaptures: {
-            0: { name: Scope.STYLE_KEYWORD() },
+            0: { name: Scope.STYLE_KEYWORD() }
           },
           patterns: [
             {
               begin: this.lastOps(Token.TILDE, Token.QUESTION_MARK),
               end: alt(this.identLower(), lookBehind(Token.RIGHT_PARENTHESIS)),
               endCaptures: {
-                0: { name: Scope.NAME_FIELD() },
+                0: { name: Scope.NAME_FIELD() }
               },
               patterns: [
                 include(this.comment),
                 {
-                  begin: seq(Token.LEFT_PARENTHESIS, negativeLookAhead(Token.ASTERISK)),
+                  begin: seq(
+                    Token.LEFT_PARENTHESIS,
+                    negativeLookAhead(Token.ASTERISK)
+                  ),
                   end: Token.RIGHT_PARENTHESIS,
                   captures: {
-                    0: { name: Scope.STYLE_DELIMITER() },
+                    0: { name: Scope.STYLE_DELIMITER() }
                   },
                   patterns: [
                     {
                       begin: lookBehind(Token.LEFT_PARENTHESIS),
                       end: alt(Token.COLON, Token.EQUALS_SIGN),
                       endCaptures: {
-                        0: { name: Scope.STYLE_KEYWORD() },
+                        0: { name: Scope.STYLE_KEYWORD() }
                       },
                       patterns: [
                         {
                           match: this.identLower(),
-                          name: Scope.NAME_FIELD(),
-                        },
-                      ],
+                          name: Scope.NAME_FIELD()
+                        }
+                      ]
                     },
                     {
                       begin: lookBehind(Token.COLON),
-                      end: alt(Token.EQUALS_SIGN, lookAhead(Token.RIGHT_PARENTHESIS)),
+                      end: alt(
+                        Token.EQUALS_SIGN,
+                        lookAhead(Token.RIGHT_PARENTHESIS)
+                      ),
                       endCaptures: {
-                        0: { name: Scope.STYLE_KEYWORD() },
+                        0: { name: Scope.STYLE_KEYWORD() }
                       },
-                      patterns: [include(this.type)],
+                      patterns: [include(this.type)]
                     },
                     {
                       begin: this.lastOps(Token.EQUALS_SIGN),
                       end: lookAhead(Token.RIGHT_PARENTHESIS),
-                      patterns: [include(this.term)],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
+                      patterns: [include(this.term)]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         },
-        include(this.pattern),
-      ],
+        include(this.pattern)
+      ]
     };
   }
 
@@ -704,29 +791,37 @@ export class OCaml implements basis.ILanguage {
       patterns: [
         {
           begin: lastWords(Token.AND, Token.TYPE),
-          end: alt(this.ops(alt(seq(Token.PLUS_SIGN, Token.EQUALS_SIGN), Token.EQUALS_SIGN)), this.declEnd()),
+          end: alt(
+            this.ops(
+              alt(seq(Token.PLUS_SIGN, Token.EQUALS_SIGN), Token.EQUALS_SIGN)
+            ),
+            this.declEnd()
+          ),
           endCaptures: {
-            0: { name: Scope.PUNCTUATION_EQUALS() },
+            0: { name: Scope.PUNCTUATION_EQUALS() }
           },
           patterns: [
             include(this.attributeIdentifier),
             include(this.pathType),
             {
               match: this.identLower(),
-              name: Scope.TYPE_CONSTRUCTOR(),
+              name: Scope.TYPE_CONSTRUCTOR()
             },
-            include(this.type),
-          ],
+            include(this.type)
+          ]
         },
         {
-          begin: this.lastOps(seq(Token.PLUS_SIGN, Token.EQUALS_SIGN), Token.EQUALS_SIGN),
+          begin: this.lastOps(
+            seq(Token.PLUS_SIGN, Token.EQUALS_SIGN),
+            Token.EQUALS_SIGN
+          ),
           end: alt(words(Token.AND), this.declEnd()),
           endCaptures: {
-            0: { name: Scope.ITEM_AND() },
+            0: { name: Scope.ITEM_AND() }
           },
-          patterns: [include(this.bindConstructor)],
-        },
-      ],
+          patterns: [include(this.bindConstructor)]
+        }
+      ]
     };
   }
 
@@ -736,22 +831,29 @@ export class OCaml implements basis.ILanguage {
         include(this.attribute),
         include(this.extension),
         include(this.commentBlock),
-        include(this.commentDoc),
-      ],
+        include(this.commentDoc)
+      ]
     };
   }
 
   public commentBlock(): schema.Rule {
-    return this.commentBlockWith(Token.LEFT_PARENTHESIS, Token.RIGHT_PARENTHESIS);
+    return this.commentBlockWith(
+      Token.LEFT_PARENTHESIS,
+      Token.RIGHT_PARENTHESIS
+    );
   }
 
   public commentBlockWith(begin: string, end: string): schema.Rule {
     return {
-      begin: seq(begin, Token.ASTERISK, negativeLookAhead(seq(Token.ASTERISK, complement(end)))),
+      begin: seq(
+        begin,
+        Token.ASTERISK,
+        negativeLookAhead(seq(Token.ASTERISK, complement(end)))
+      ),
       end: seq(Token.ASTERISK, end),
       name: Scope.META_COMMENT(),
       contentName: Scope.STYLE_ITALICS(),
-      patterns: [include(this.commentBlock), include(this.commentDoc)],
+      patterns: [include(this.commentBlock), include(this.commentDoc)]
     };
   }
 
@@ -765,7 +867,7 @@ export class OCaml implements basis.ILanguage {
       end: seq(Token.ASTERISK, end),
       name: Scope.META_COMMENT(),
       contentName: Scope.STYLE_ITALICS,
-      patterns: [{ match: Token.ASTERISK }, include(this.comment)],
+      patterns: [{ match: Token.ASTERISK }, include(this.comment)]
     };
   }
 
@@ -778,8 +880,8 @@ export class OCaml implements basis.ILanguage {
         include(this.declModule),
         include(this.declOpen),
         include(this.declTerm),
-        include(this.declType),
-      ],
+        include(this.declType)
+      ]
     };
   }
 
@@ -788,10 +890,10 @@ export class OCaml implements basis.ILanguage {
       begin: words(Token.CLASS),
       end: this.declEndItem(),
       beginCaptures: {
-        0: { name: Scope.ITEM_CLASS() },
+        0: { name: Scope.ITEM_CLASS() }
       },
       endCaptures: {
-        0: { name: Scope.STYLE_DELIMITER() },
+        0: { name: Scope.STYLE_DELIMITER() }
       },
       patterns: [
         include(this.comment),
@@ -800,19 +902,19 @@ export class OCaml implements basis.ILanguage {
           begin: lastWords(Token.CLASS),
           end: alt(words(Token.TYPE), this.declEndSans(Token.TYPE)),
           beginCaptures: {
-            0: { name: Scope.ITEM_CLASS() },
+            0: { name: Scope.ITEM_CLASS() }
           },
           endCaptures: {
-            0: { name: Scope.STYLE_KEYWORD() },
+            0: { name: Scope.STYLE_KEYWORD() }
           },
-          patterns: [include(this.bindClassTerm)],
+          patterns: [include(this.bindClassTerm)]
         },
         {
           begin: lastWords(Token.TYPE),
           end: this.declEnd(),
-          patterns: [include(this.bindClassType)],
-        },
-      ],
+          patterns: [include(this.bindClassType)]
+        }
+      ]
     };
   }
 
@@ -822,17 +924,17 @@ export class OCaml implements basis.ILanguage {
       begin: words(Token.EXCEPTION),
       end: this.declEndItem(),
       beginCaptures: {
-        0: { name: `keyword ${Scope.STYLE_UNDERLINE()}` },
+        0: { name: `keyword ${Scope.STYLE_UNDERLINE()}` }
       },
       endCaptures: {
-        0: { name: Scope.STYLE_DELIMITER() },
+        0: { name: Scope.STYLE_DELIMITER() }
       },
       patterns: [
         include(this.attributeIdentifier),
         include(this.comment),
         include(this.pragma),
-        include(this.bindConstructor),
-      ],
+        include(this.bindConstructor)
+      ]
     };
   }
 
@@ -841,17 +943,17 @@ export class OCaml implements basis.ILanguage {
       begin: words(Token.INCLUDE),
       end: this.declEndItem(),
       beginCaptures: {
-        0: { name: Scope.ITEM_INCLUDE() },
+        0: { name: Scope.ITEM_INCLUDE() }
       },
       endCaptures: {
-        0: { name: Scope.STYLE_DELIMITER() },
+        0: { name: Scope.STYLE_DELIMITER() }
       },
       patterns: [
         include(this.attributeIdentifier),
         include(this.comment),
         include(this.pragma),
-        include(this.signature),
-      ],
+        include(this.signature)
+      ]
     };
   }
 
@@ -860,22 +962,22 @@ export class OCaml implements basis.ILanguage {
       begin: words(Token.INHERIT),
       end: this.declEndItem(),
       beginCaptures: {
-        0: { name: Scope.STYLE_OPERATOR() },
+        0: { name: Scope.STYLE_OPERATOR() }
       },
       endCaptures: {
-        0: { name: Scope.STYLE_DELIMITER() },
+        0: { name: Scope.STYLE_DELIMITER() }
       },
       patterns: [
         {
           begin: words(Token.AS),
           end: this.declEndItem(),
           beginCaptures: {
-            0: { name: Scope.STYLE_OPERATOR() },
+            0: { name: Scope.STYLE_OPERATOR() }
           },
-          patterns: [include(this.variablePattern)],
+          patterns: [include(this.variablePattern)]
         },
-        ...rest,
-      ],
+        ...rest
+      ]
     };
   }
 
@@ -884,10 +986,10 @@ export class OCaml implements basis.ILanguage {
       begin: alt(lastWords(Token.MODULE), words(Token.MODULE)),
       end: this.declEndItem(),
       beginCaptures: {
-        0: { name: Scope.ITEM_MODULE() },
+        0: { name: Scope.ITEM_MODULE() }
       },
       endCaptures: {
-        0: { name: Scope.STYLE_DELIMITER() },
+        0: { name: Scope.STYLE_DELIMITER() }
       },
       patterns: [
         include(this.comment),
@@ -896,28 +998,28 @@ export class OCaml implements basis.ILanguage {
           begin: lastWords(Token.MODULE),
           end: alt(capture(words(Token.TYPE)), lookAhead(set(Class.upper))),
           endCaptures: {
-            0: { name: Scope.STYLE_KEYWORD() },
+            0: { name: Scope.STYLE_KEYWORD() }
           },
           patterns: [
             include(this.attributeIdentifier),
             include(this.comment),
             {
               match: words(Token.REC),
-              name: Scope.KEYWORD_REC(),
-            },
-          ],
+              name: Scope.KEYWORD_REC()
+            }
+          ]
         },
         {
           begin: lastWords(Token.TYPE),
           end: this.declEnd(),
-          patterns: [include(this.bindSignature)],
+          patterns: [include(this.bindSignature)]
         },
         {
           begin: lookAhead(set(Class.upper)),
           end: this.declEnd(),
-          patterns: [include(this.bindStructure)],
-        },
-      ],
+          patterns: [include(this.bindStructure)]
+        }
+      ]
     };
   }
 
@@ -926,37 +1028,49 @@ export class OCaml implements basis.ILanguage {
       begin: words(Token.OPEN),
       end: this.declEndItem(),
       beginCaptures: {
-        0: { name: Scope.ITEM_OPEN() },
+        0: { name: Scope.ITEM_OPEN() }
       },
       endCaptures: {
-        0: { name: Scope.STYLE_DELIMITER() },
+        0: { name: Scope.STYLE_DELIMITER() }
       },
       patterns: [
         include(this.attributeIdentifier),
         include(this.comment),
         include(this.pragma),
-        include(this.pathModuleExtended),
-      ],
+        include(this.pathModuleExtended)
+      ]
     };
   }
 
   public declTerm(): schema.Rule {
     return {
       begin: seq(
-        words(group(alt(capture(alt(Token.EXTERNAL, Token.VAL)), capture(Token.METHOD), capture(Token.LET)))),
-        capture(opt("!")),
+        words(
+          group(
+            alt(
+              capture(alt(Token.EXTERNAL, Token.VAL)),
+              capture(Token.METHOD),
+              capture(Token.LET)
+            )
+          )
+        ),
+        capture(opt("!"))
       ),
       end: this.declEndItem(),
       beginCaptures: {
         1: { name: Scope.ITEM_VAL() },
         2: { name: Scope.ITEM_METHOD() },
         3: { name: Scope.ITEM_LET() },
-        4: { name: Scope.STYLE_OPERATOR() },
+        4: { name: Scope.STYLE_OPERATOR() }
       },
       endCaptures: {
-        0: { name: Scope.STYLE_DELIMITER() },
+        0: { name: Scope.STYLE_DELIMITER() }
       },
-      patterns: [include(this.comment), include(this.pragma), include(this.bindTerm)],
+      patterns: [
+        include(this.comment),
+        include(this.pragma),
+        include(this.bindTerm)
+      ]
     };
   }
 
@@ -965,27 +1079,34 @@ export class OCaml implements basis.ILanguage {
       begin: alt(lastWords(Token.TYPE), words(Token.TYPE)),
       end: this.declEndItem(),
       beginCaptures: {
-        0: { name: `keyword ${Scope.STYLE_UNDERLINE()}` },
+        0: { name: `keyword ${Scope.STYLE_UNDERLINE()}` }
       },
       endCaptures: {
-        0: { name: Scope.STYLE_DELIMITER() },
+        0: { name: Scope.STYLE_DELIMITER() }
       },
-      patterns: [include(this.comment), include(this.pragma), include(this.bindType)],
+      patterns: [
+        include(this.comment),
+        include(this.pragma),
+        include(this.bindType)
+      ]
     };
   }
 
   public extension(): schema.Rule {
     return {
-      begin: seq(capture(Token.LEFT_SQUARE_BRACKET), capture(this.ops(`${Token.PERCENT_SIGN}{1,3}`))),
+      begin: seq(
+        capture(Token.LEFT_SQUARE_BRACKET),
+        capture(this.ops(`${Token.PERCENT_SIGN}{1,3}`))
+      ),
       end: Token.RIGHT_SQUARE_BRACKET,
       beginCaptures: {
         1: { name: Scope.TERM_CONSTRUCTOR() },
-        2: { name: Scope.STYLE_OPERATOR() },
+        2: { name: Scope.STYLE_OPERATOR() }
       },
       endCaptures: {
-        0: { name: Scope.TERM_CONSTRUCTOR() },
+        0: { name: Scope.TERM_CONSTRUCTOR() }
       },
-      patterns: [include(this.attributePayload)],
+      patterns: [include(this.attributePayload)]
     };
   }
 
@@ -994,7 +1115,12 @@ export class OCaml implements basis.ILanguage {
     for (const token of rest) {
       result.push(`[^${seq(...this.operatorTokens())}]${token}`, `^${token}`);
     }
-    return group(seq(lookBehind(group(alt(...result))), negativeLookAhead(set(...this.operatorTokens()))));
+    return group(
+      seq(
+        lookBehind(group(alt(...result))),
+        negativeLookAhead(set(...this.operatorTokens()))
+      )
+    );
   }
 
   public literal(): schema.Rule {
@@ -1009,8 +1135,8 @@ export class OCaml implements basis.ILanguage {
         include(this.literalObjectTerm),
         include(this.literalString), // NOTE: string before record because of {| … |}
         include(this.literalRecord),
-        include(this.literalUnit),
-      ],
+        include(this.literalUnit)
+      ]
     };
   }
 
@@ -1019,16 +1145,16 @@ export class OCaml implements basis.ILanguage {
       begin: seq(Token.LEFT_SQUARE_BRACKET, Token.VERTICAL_LINE),
       end: seq(Token.VERTICAL_LINE, Token.RIGHT_SQUARE_BRACKET),
       captures: {
-        0: { name: Scope.TERM_CONSTRUCTOR() },
+        0: { name: Scope.TERM_CONSTRUCTOR() }
       },
-      patterns: [include(this.term)],
+      patterns: [include(this.term)]
     };
   }
 
   public literalBoolean(): schema.Rule {
     return {
       match: words(alt(Token.FALSE, Token.TRUE)),
-      name: Scope.TERM_CONSTRUCTOR(),
+      name: Scope.TERM_CONSTRUCTOR()
     };
   }
 
@@ -1037,7 +1163,7 @@ export class OCaml implements basis.ILanguage {
       begin: seq(negativeLookBehind(set(Class.word)), Token.APOSTROPHE),
       end: Token.APOSTROPHE,
       name: Scope.TERM_CHARACTER(),
-      patterns: [include(this.literalCharacterEscape)],
+      patterns: [include(this.literalCharacterEscape)]
     };
   }
 
@@ -1056,11 +1182,11 @@ export class OCaml implements basis.ILanguage {
           begin: Token.LEFT_SQUARE_BRACKET,
           end: Token.RIGHT_SQUARE_BRACKET,
           captures: {
-            0: { name: Scope.TERM_CONSTRUCTOR() },
+            0: { name: Scope.TERM_CONSTRUCTOR() }
           },
-          patterns: [include(this.term)],
-        },
-      ],
+          patterns: [include(this.term)]
+        }
+      ]
     };
   }
 
@@ -1069,9 +1195,13 @@ export class OCaml implements basis.ILanguage {
       match: seq(
         negativeLookBehind(set(Class.alpha)),
         seq(set(Class.digit), many(set(Class.digit))),
-        opt(capture(seq(Token.FULL_STOP, set(Class.digit), many(set(Class.digit))))),
+        opt(
+          capture(
+            seq(Token.FULL_STOP, set(Class.digit), many(set(Class.digit)))
+          )
+        )
       ),
-      name: Scope.TERM_NUMBER(),
+      name: Scope.TERM_NUMBER()
     };
   }
 
@@ -1086,19 +1216,23 @@ export class OCaml implements basis.ILanguage {
           begin: Token.QUOTATION_MARK,
           end: Token.QUOTATION_MARK,
           name: Scope.TERM_STRING(),
-          patterns: [include(this.literalStringEscape)],
+          patterns: [include(this.literalStringEscape)]
         },
         {
           begin: seq(
             capture(Token.LEFT_CURLY_BRACKET),
             capture(opt(many(set(Token.LOW_LINE, Class.lower)))),
-            capture(Token.VERTICAL_LINE),
+            capture(Token.VERTICAL_LINE)
           ),
-          end: seq(capture(Token.VERTICAL_LINE), capture("\\2"), capture(Token.RIGHT_CURLY_BRACKET)),
+          end: seq(
+            capture(Token.VERTICAL_LINE),
+            capture("\\2"),
+            capture(Token.RIGHT_CURLY_BRACKET)
+          ),
           name: Scope.TERM_STRING(),
-          patterns: [include(this.literalStringEscape)],
-        },
-      ],
+          patterns: [include(this.literalStringEscape)]
+        }
+      ]
     };
   }
 
@@ -1109,7 +1243,7 @@ export class OCaml implements basis.ILanguage {
   public literalUnit(): schema.Rule {
     return {
       match: seq(Token.LEFT_PARENTHESIS, Token.RIGHT_PARENTHESIS),
-      name: Scope.TERM_CONSTRUCTOR(),
+      name: Scope.TERM_CONSTRUCTOR()
     };
   }
 
@@ -1121,15 +1255,15 @@ export class OCaml implements basis.ILanguage {
           begin: words(Token.OBJECT),
           end: words(Token.END),
           captures: {
-            0: { name: Scope.LITERAL_OBJECT() },
+            0: { name: Scope.LITERAL_OBJECT() }
           },
-          patterns: [...rest, include(this.pattern), include(this.declTerm)],
+          patterns: [...rest, include(this.pattern), include(this.declTerm)]
         },
         {
           begin: Token.LEFT_SQUARE_BRACKET,
-          end: Token.RIGHT_SQUARE_BRACKET,
-        },
-      ],
+          end: Token.RIGHT_SQUARE_BRACKET
+        }
+      ]
     };
   }
 
@@ -1142,14 +1276,34 @@ export class OCaml implements basis.ILanguage {
   }
 
   public operatorTokens(): string[] {
-    return ["#", "\\-", ":", "!", "?", ".", "@", "*", "/", "&", "%", "^", "+", "<", "=", ">", "|", "~", "$"];
+    return [
+      "#",
+      "\\-",
+      ":",
+      "!",
+      "?",
+      ".",
+      "@",
+      "*",
+      "/",
+      "&",
+      "%",
+      "^",
+      "+",
+      "<",
+      "=",
+      ">",
+      "|",
+      "~",
+      "$"
+    ];
   }
 
   public ops(arg: string): string {
     return seq(
       negativeLookBehind(set(...this.operatorTokens())),
       arg,
-      negativeLookAhead(set(...this.operatorTokens())),
+      negativeLookAhead(set(...this.operatorTokens()))
     );
   }
 
@@ -1159,9 +1313,9 @@ export class OCaml implements basis.ILanguage {
         include(this.pathModulePrefixExtended),
         {
           match: this.identUpper(),
-          name: Scope.NAME_MODULE(),
-        },
-      ],
+          name: Scope.NAME_MODULE()
+        }
+      ]
     };
   }
 
@@ -1171,18 +1325,28 @@ export class OCaml implements basis.ILanguage {
         include(this.pathModulePrefixSimple),
         {
           match: this.identUpper(),
-          name: Scope.NAME_MODULE(),
-        },
-      ],
+          name: Scope.NAME_MODULE()
+        }
+      ]
     };
   }
 
-  public pathModulePrefix(continueWith: string[], ...rest: schema.Rule[]): schema.Rule {
+  public pathModulePrefix(
+    continueWith: string[],
+    ...rest: schema.Rule[]
+  ): schema.Rule {
     return {
-      begin: seq(this.identUpper(), lookAhead(seq(many(set(Class.space)), alt(Token.FULL_STOP, ...continueWith)))),
-      end: negativeLookAhead(alt(set(Class.space, Token.FULL_STOP), ...continueWith)),
+      begin: seq(
+        this.identUpper(),
+        lookAhead(
+          seq(many(set(Class.space)), alt(Token.FULL_STOP, ...continueWith))
+        )
+      ),
+      end: negativeLookAhead(
+        alt(set(Class.space, Token.FULL_STOP), ...continueWith)
+      ),
       beginCaptures: {
-        0: { name: Scope.NAME_MODULE() },
+        0: { name: Scope.NAME_MODULE() }
       },
       patterns: [
         include(this.comment),
@@ -1190,54 +1354,91 @@ export class OCaml implements basis.ILanguage {
         {
           begin: this.ops(Token.FULL_STOP),
           end: alt(
-            capture(seq(this.identUpper(), lookAhead(seq(many(set(Class.space)), alt(Token.FULL_STOP, "$"))))),
-            capture(seq(this.identUpper(), lookAhead(seq(many(set(Class.space)), group(alt(...continueWith)))))),
-            capture(seq(this.identUpper(), lookAhead(seq(many(set(Class.space)), Token.RIGHT_PARENTHESIS)))),
-            negativeLookAhead(alt(set(Class.space, Token.FULL_STOP, Class.upper), ...continueWith)),
+            capture(
+              seq(
+                this.identUpper(),
+                lookAhead(
+                  seq(many(set(Class.space)), alt(Token.FULL_STOP, "$"))
+                )
+              )
+            ),
+            capture(
+              seq(
+                this.identUpper(),
+                lookAhead(
+                  seq(many(set(Class.space)), group(alt(...continueWith)))
+                )
+              )
+            ),
+            capture(
+              seq(
+                this.identUpper(),
+                lookAhead(seq(many(set(Class.space)), Token.RIGHT_PARENTHESIS))
+              )
+            ),
+            negativeLookAhead(
+              alt(
+                set(Class.space, Token.FULL_STOP, Class.upper),
+                ...continueWith
+              )
+            )
           ),
           beginCaptures: {
-            0: { name: Scope.PUNCTUATION_DOT() },
+            0: { name: Scope.PUNCTUATION_DOT() }
           },
           endCaptures: {
             1: { name: Scope.NAME_MODULE() },
             2: { name: Scope.TYPE_CONSTRUCTOR() },
-            3: { name: Scope.VARIABLE_PATTERN() },
-          },
-        },
-      ],
+            3: { name: Scope.VARIABLE_PATTERN() }
+          }
+        }
+      ]
     };
   }
 
   public pathModulePrefixSimple(): schema.Rule {
     return {
-      begin: seq(this.identUpper(), lookAhead(seq(many(set(Class.space)), Token.FULL_STOP))),
+      begin: seq(
+        this.identUpper(),
+        lookAhead(seq(many(set(Class.space)), Token.FULL_STOP))
+      ),
       end: negativeLookAhead(set(Class.space, Token.FULL_STOP)),
       beginCaptures: {
-        0: { name: Scope.NAME_MODULE() },
+        0: { name: Scope.NAME_MODULE() }
       },
       patterns: [
         include(this.comment),
         {
           begin: this.ops(Token.FULL_STOP),
           end: alt(
-            capture(seq(this.identUpper(), lookAhead(seq(many(set(Class.space)), Token.FULL_STOP)))),
-            capture(seq(this.identUpper(), lookAhead(seq(many(set(Class.space)))))),
-            negativeLookAhead(set(Class.space, Token.FULL_STOP, Class.upper)),
+            capture(
+              seq(
+                this.identUpper(),
+                lookAhead(seq(many(set(Class.space)), Token.FULL_STOP))
+              )
+            ),
+            capture(
+              seq(this.identUpper(), lookAhead(seq(many(set(Class.space)))))
+            ),
+            negativeLookAhead(set(Class.space, Token.FULL_STOP, Class.upper))
           ),
           beginCaptures: {
-            0: { name: Scope.PUNCTUATION_DOT() },
+            0: { name: Scope.PUNCTUATION_DOT() }
           },
           endCaptures: {
             1: { name: Scope.NAME_MODULE() },
-            2: { name: Scope.TERM_CONSTRUCTOR() },
-          },
-        },
-      ],
+            2: { name: Scope.TERM_CONSTRUCTOR() }
+          }
+        }
+      ]
     };
   }
 
   public pathModulePrefixExtended(): schema.Rule {
-    return this.pathModulePrefix(["$", Token.LEFT_PARENTHESIS], this.pathModulePrefixExtendedParens());
+    return this.pathModulePrefix(
+      ["$", Token.LEFT_PARENTHESIS],
+      this.pathModulePrefixExtendedParens()
+    );
   }
 
   public pathModulePrefixExtendedParens(): schema.Rule {
@@ -1245,15 +1446,20 @@ export class OCaml implements basis.ILanguage {
       begin: Token.LEFT_PARENTHESIS,
       end: Token.RIGHT_PARENTHESIS,
       captures: {
-        0: { name: Scope.STYLE_CONTROL() },
+        0: { name: Scope.STYLE_CONTROL() }
       },
       patterns: [
         {
-          match: capture(seq(this.identUpper(), lookAhead(seq(many(set(Class.space)), Token.RIGHT_PARENTHESIS)))),
-          name: Scope.VARIABLE_PATTERN(),
+          match: capture(
+            seq(
+              this.identUpper(),
+              lookAhead(seq(many(set(Class.space)), Token.RIGHT_PARENTHESIS))
+            )
+          ),
+          name: Scope.VARIABLE_PATTERN()
         },
-        include(this.structure),
-      ],
+        include(this.structure)
+      ]
     };
   }
 
@@ -1264,49 +1470,55 @@ export class OCaml implements basis.ILanguage {
           begin: this.identLower(),
           end: seq(
             lookAhead(complement(Class.space, Token.FULL_STOP)),
-            negativeLookAhead(seq(Token.LEFT_PARENTHESIS, Token.ASTERISK)),
+            negativeLookAhead(seq(Token.LEFT_PARENTHESIS, Token.ASTERISK))
           ),
           patterns: [
             include(this.comment),
             {
-              begin: alt(this.lastOps(Token.FULL_STOP), this.ops(Token.FULL_STOP)),
+              begin: alt(
+                this.lastOps(Token.FULL_STOP),
+                this.ops(Token.FULL_STOP)
+              ),
               end: alt(
                 capture(this.ops(Token.FULL_STOP)),
                 capture(this.identLowerPath()),
                 lookBehind(Token.RIGHT_PARENTHESIS),
-                lookBehind(Token.RIGHT_SQUARE_BRACKET),
+                lookBehind(Token.RIGHT_SQUARE_BRACKET)
               ),
               beginCaptures: {
-                0: { name: Scope.PUNCTUATION_DOT() },
+                0: { name: Scope.PUNCTUATION_DOT() }
               },
               endCaptures: {
                 1: { name: Scope.PUNCTUATION_DOT() },
-                2: { name: Scope.NAME_FIELD() },
+                2: { name: Scope.NAME_FIELD() }
               },
               patterns: [
                 include(this.comment),
                 include(this.pathModulePrefixSimple),
                 {
-                  begin: seq(Token.LEFT_PARENTHESIS, negativeLookAhead(Token.ASTERISK)),
+                  begin: seq(
+                    Token.LEFT_PARENTHESIS,
+                    negativeLookAhead(Token.ASTERISK)
+                  ),
                   end: Token.RIGHT_PARENTHESIS,
                   captures: {
-                    0: { name: Scope.STYLE_OPERATOR() },
+                    0: { name: Scope.STYLE_OPERATOR() }
                   },
-                  patterns: [include(this.term)],
+                  patterns: [include(this.term)]
                 },
                 {
                   begin: Token.LEFT_SQUARE_BRACKET,
                   end: Token.RIGHT_SQUARE_BRACKET,
                   captures: {
-                    0: { name: Scope.STYLE_OPERATOR() },
+                    0: { name: Scope.STYLE_OPERATOR() }
                   },
-                  patterns: [include(this.pattern)],
-                },
-              ],
-            },
-          ],
-        },
-      ],
+                  patterns: [include(this.pattern)]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     };
   }
 
@@ -1316,9 +1528,9 @@ export class OCaml implements basis.ILanguage {
         include(this.pathModulePrefix),
         {
           match: this.identLower(),
-          name: Scope.NAME_TYPE(),
-        },
-      ],
+          name: Scope.NAME_TYPE()
+        }
+      ]
     };
   }
 
@@ -1336,8 +1548,8 @@ export class OCaml implements basis.ILanguage {
         include(this.patternParens),
         include(this.patternType),
         include(this.variablePattern),
-        include(this.termOperator),
-      ],
+        include(this.termOperator)
+      ]
     };
   }
 
@@ -1346,16 +1558,16 @@ export class OCaml implements basis.ILanguage {
       begin: seq(Token.LEFT_SQUARE_BRACKET, Token.VERTICAL_LINE),
       end: seq(Token.VERTICAL_LINE, Token.RIGHT_SQUARE_BRACKET),
       captures: {
-        0: { name: Scope.TERM_CONSTRUCTOR() },
+        0: { name: Scope.TERM_CONSTRUCTOR() }
       },
-      patterns: [include(this.pattern)],
+      patterns: [include(this.pattern)]
     };
   }
 
   public patternLazy(): schema.Rule {
     return {
       match: Token.LAZY,
-      name: Scope.STYLE_OPERATOR(),
+      name: Scope.STYLE_OPERATOR()
     };
   }
 
@@ -1364,20 +1576,24 @@ export class OCaml implements basis.ILanguage {
       begin: Token.LEFT_SQUARE_BRACKET,
       end: Token.RIGHT_SQUARE_BRACKET,
       captures: {
-        0: { name: Scope.TERM_CONSTRUCTOR() },
+        0: { name: Scope.TERM_CONSTRUCTOR() }
       },
-      patterns: [include(this.pattern)],
+      patterns: [include(this.pattern)]
     };
   }
 
   public patternMisc(): schema.Rule {
     return {
-      match: alt(capture(this.ops(Token.COMMA)), capture(this.operator()), words(capture(Token.AS))),
+      match: alt(
+        capture(this.ops(Token.COMMA)),
+        capture(this.operator()),
+        words(capture(Token.AS))
+      ),
       captures: {
         1: { name: Scope.PUNCTUATION_COMMA() },
         2: { name: Scope.STYLE_OPERATOR() },
-        3: { name: Scope.KEYWORD_AS() },
-      },
+        3: { name: Scope.KEYWORD_AS() }
+      }
     };
   }
 
@@ -1386,9 +1602,9 @@ export class OCaml implements basis.ILanguage {
       begin: words(Token.MODULE),
       end: lookAhead(Token.RIGHT_PARENTHESIS),
       beginCaptures: {
-        0: { name: Scope.TERM_MODULE() },
+        0: { name: Scope.TERM_MODULE() }
       },
-      patterns: [include(this.declModule)],
+      patterns: [include(this.declModule)]
     };
   }
 
@@ -1405,9 +1621,9 @@ export class OCaml implements basis.ILanguage {
       begin: words(Token.TYPE),
       end: lookAhead(Token.RIGHT_PARENTHESIS),
       beginCaptures: {
-        0: { name: Scope.STYLE_KEYWORD() },
+        0: { name: Scope.STYLE_KEYWORD() }
       },
-      patterns: [include(this.declType)],
+      patterns: [include(this.declType)]
     };
   }
 
@@ -1416,9 +1632,13 @@ export class OCaml implements basis.ILanguage {
       begin: this.ops(Token.NUMBER_SIGN),
       end: this.declEnd(),
       beginCaptures: {
-        0: { name: Scope.STYLE_DELIMITER() },
+        0: { name: Scope.STYLE_DELIMITER() }
       },
-      patterns: [include(this.comment), include(this.literalNumber), include(this.literalString)],
+      patterns: [
+        include(this.comment),
+        include(this.literalNumber),
+        include(this.literalString)
+      ]
     };
   }
 
@@ -1427,7 +1647,7 @@ export class OCaml implements basis.ILanguage {
       begin: Token.LEFT_CURLY_BRACKET,
       end: Token.RIGHT_CURLY_BRACKET,
       captures: {
-        0: { name: `${Scope.TERM_CONSTRUCTOR()} ${Scope.STYLE_BOLD()}` },
+        0: { name: `${Scope.TERM_CONSTRUCTOR()} ${Scope.STYLE_BOLD()}` }
       },
       patterns: [
         {
@@ -1437,22 +1657,22 @@ export class OCaml implements basis.ILanguage {
             capture(Token.EQUALS_SIGN),
             capture(Token.SEMICOLON),
             capture(Token.WITH),
-            lookAhead(Token.RIGHT_CURLY_BRACKET),
+            lookAhead(Token.RIGHT_CURLY_BRACKET)
           ),
           endCaptures: {
             1: { name: Scope.PUNCTUATION_COLON() },
             2: { name: Scope.PUNCTUATION_EQUALS() },
             3: { name: Scope.STYLE_OPERATOR() },
-            4: { name: Scope.STYLE_OPERATOR() },
+            4: { name: Scope.STYLE_OPERATOR() }
           },
           patterns: [
             include(this.comment),
             include(this.pathModulePrefixSimple),
             {
               match: this.identLower(),
-              name: `${Scope.NAME_FIELD()} ${Scope.STYLE_ITALICS()}`,
-            },
-          ],
+              name: `${Scope.NAME_FIELD()} ${Scope.STYLE_ITALICS()}`
+            }
+          ]
         },
         {
           begin: lastWords(Token.WITH),
@@ -1460,38 +1680,42 @@ export class OCaml implements basis.ILanguage {
             capture(Token.COLON),
             capture(Token.EQUALS_SIGN),
             capture(Token.SEMICOLON),
-            lookAhead(Token.RIGHT_CURLY_BRACKET),
+            lookAhead(Token.RIGHT_CURLY_BRACKET)
           ),
           endCaptures: {
             1: { name: Scope.PUNCTUATION_COLON() },
             2: { name: Scope.PUNCTUATION_EQUALS() },
-            3: { name: Scope.STYLE_OPERATOR() },
+            3: { name: Scope.STYLE_OPERATOR() }
           },
           patterns: [
             {
               match: this.identLower(),
-              name: `${Scope.NAME_FIELD()} ${Scope.STYLE_ITALICS()}`,
-            },
-          ],
+              name: `${Scope.NAME_FIELD()} ${Scope.STYLE_ITALICS()}`
+            }
+          ]
         },
         {
           begin: this.lastOps(Token.COLON),
-          end: alt(capture(Token.SEMICOLON), capture(Token.EQUALS_SIGN), lookAhead(Token.RIGHT_CURLY_BRACKET)),
+          end: alt(
+            capture(Token.SEMICOLON),
+            capture(Token.EQUALS_SIGN),
+            lookAhead(Token.RIGHT_CURLY_BRACKET)
+          ),
           endCaptures: {
             1: { name: Scope.STYLE_OPERATOR() },
-            2: { name: Scope.PUNCTUATION_EQUALS() },
+            2: { name: Scope.PUNCTUATION_EQUALS() }
           },
-          patterns: [include(this.type)],
+          patterns: [include(this.type)]
         },
         {
           begin: this.lastOps(Token.EQUALS_SIGN),
           end: alt(Token.SEMICOLON, lookAhead(Token.RIGHT_CURLY_BRACKET)),
           endCaptures: {
-            0: { name: Scope.STYLE_OPERATOR() },
+            0: { name: Scope.STYLE_OPERATOR() }
           },
-          patterns: definiens,
-        },
-      ],
+          patterns: definiens
+        }
+      ]
     };
   }
 
@@ -1504,8 +1728,8 @@ export class OCaml implements basis.ILanguage {
         include(this.pathModuleExtended),
         include(this.signatureParens),
         include(this.signatureRecovered),
-        include(this.signatureConstraints),
-      ],
+        include(this.signatureConstraints)
+      ]
     };
   }
 
@@ -1514,7 +1738,7 @@ export class OCaml implements basis.ILanguage {
       begin: words(Token.WITH),
       end: alt(lookAhead(Token.RIGHT_PARENTHESIS), this.declEnd()),
       beginCaptures: {
-        0: { name: Scope.SIGNATURE_WITH() },
+        0: { name: Scope.SIGNATURE_WITH() }
       },
       patterns: [
         {
@@ -1522,18 +1746,18 @@ export class OCaml implements basis.ILanguage {
           end: words(group(alt(capture(Token.MODULE), capture(Token.TYPE)))),
           endCaptures: {
             1: { name: Scope.TERM_MODULE() },
-            2: { name: Scope.STYLE_KEYWORD() },
-          },
+            2: { name: Scope.STYLE_KEYWORD() }
+          }
         },
         include(this.declModule),
-        include(this.declType),
-      ],
+        include(this.declType)
+      ]
     };
   }
 
   public signatureFunctor(): schema.Rule {
     return {
-      patterns: [...this.functor(this.signature)],
+      patterns: [...this.functor(this.signature)]
     };
   }
 
@@ -1546,9 +1770,13 @@ export class OCaml implements basis.ILanguage {
       begin,
       end,
       captures: {
-        0: { name: Scope.LITERAL_SIGNATURE() },
+        0: { name: Scope.LITERAL_SIGNATURE() }
       },
-      patterns: [include(this.comment), include(this.pragma), include(this.decl)],
+      patterns: [
+        include(this.comment),
+        include(this.pragma),
+        include(this.decl)
+      ]
     };
   }
 
@@ -1562,13 +1790,19 @@ export class OCaml implements basis.ILanguage {
         {
           begin: alt(
             Token.LEFT_PARENTHESIS,
-            this.lastOps(Token.COLON, seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN)),
-            lastWords(Token.INCLUDE, Token.OPEN),
+            this.lastOps(
+              Token.COLON,
+              seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN)
+            ),
+            lastWords(Token.INCLUDE, Token.OPEN)
           ),
-          end: alt(words(Token.MODULE), negativeLookAhead(alt("$", set(Class.space), words(Token.MODULE)))),
+          end: alt(
+            words(Token.MODULE),
+            negativeLookAhead(alt("$", set(Class.space), words(Token.MODULE)))
+          ),
           endCaptures: {
-            0: { name: Scope.TERM_MODULE() },
-          },
+            0: { name: Scope.TERM_MODULE() }
+          }
         },
         {
           begin: lastWords(Token.MODULE),
@@ -1578,24 +1812,24 @@ export class OCaml implements basis.ILanguage {
               begin: lastWords(Token.MODULE),
               end: words(Token.TYPE),
               endCaptures: {
-                0: { name: Scope.STYLE_KEYWORD() },
-              },
+                0: { name: Scope.STYLE_KEYWORD() }
+              }
             },
             {
               begin: lastWords(Token.TYPE),
               end: words(Token.OF),
               endCaptures: {
-                0: { name: Scope.STYLE_DELIMITER() },
-              },
+                0: { name: Scope.STYLE_DELIMITER() }
+              }
             },
             {
               begin: lastWords(Token.OF),
               end: this.declEnd(),
-              patterns: [include(this.signature)],
-            },
-          ],
-        },
-      ],
+              patterns: [include(this.signature)]
+            }
+          ]
+        }
+      ]
     };
   }
 
@@ -1606,14 +1840,14 @@ export class OCaml implements basis.ILanguage {
         include(this.structureLiteral),
         include(this.structureFunctor),
         include(this.pathModuleExtended),
-        include(this.structureParens),
-      ],
+        include(this.structureParens)
+      ]
     };
   }
 
   public structureFunctor(): schema.Rule {
     return {
-      patterns: [...this.functor(this.structure)],
+      patterns: [...this.functor(this.structure)]
     };
   }
 
@@ -1626,9 +1860,13 @@ export class OCaml implements basis.ILanguage {
       begin,
       end,
       captures: {
-        0: { name: Scope.LITERAL_STRUCTURE() },
+        0: { name: Scope.LITERAL_STRUCTURE() }
       },
-      patterns: [include(this.comment), include(this.pragma), include(this.decl)],
+      patterns: [
+        include(this.comment),
+        include(this.pragma),
+        include(this.decl)
+      ]
     };
   }
 
@@ -1637,9 +1875,9 @@ export class OCaml implements basis.ILanguage {
       begin: Token.LEFT_PARENTHESIS,
       end: Token.RIGHT_PARENTHESIS,
       captures: {
-        0: { name: Scope.STYLE_DELIMITER() },
+        0: { name: Scope.STYLE_DELIMITER() }
       },
-      patterns: [include(this.structureUnpack), include(this.structure)],
+      patterns: [include(this.structureUnpack), include(this.structure)]
     };
   }
 
@@ -1648,14 +1886,14 @@ export class OCaml implements basis.ILanguage {
       begin: words(Token.VAL),
       end: lookAhead(Token.RIGHT_PARENTHESIS),
       beginCaptures: {
-        0: { name: Scope.STYLE_OPERATOR() },
-      },
+        0: { name: Scope.STYLE_OPERATOR() }
+      }
     };
   }
 
   public term(): schema.Rule {
     return {
-      patterns: [include(this.termLet), include(this.termAtomic)],
+      patterns: [include(this.termLet), include(this.termAtomic)]
     };
   }
 
@@ -1675,15 +1913,15 @@ export class OCaml implements basis.ILanguage {
         include(this.termOperator),
         include(this.termTry),
         include(this.termWhile),
-        include(this.pathRecord),
-      ],
+        include(this.pathRecord)
+      ]
     };
   }
 
   public termConditional(): schema.Rule {
     return {
       match: words(group(alt(Token.IF, Token.THEN, Token.ELSE))),
-      name: Scope.TERM_IF(),
+      name: Scope.TERM_IF()
     };
   }
 
@@ -1693,9 +1931,9 @@ export class OCaml implements basis.ILanguage {
         include(this.pathModulePrefixSimple),
         {
           match: this.identUpper(),
-          name: Scope.TERM_CONSTRUCTOR(),
-        },
-      ],
+          name: Scope.TERM_CONSTRUCTOR()
+        }
+      ]
     };
   }
 
@@ -1703,22 +1941,25 @@ export class OCaml implements basis.ILanguage {
     return {
       patterns: [
         {
-          begin: seq(Token.LEFT_PARENTHESIS, negativeLookAhead(Token.RIGHT_PARENTHESIS)),
+          begin: seq(
+            Token.LEFT_PARENTHESIS,
+            negativeLookAhead(Token.RIGHT_PARENTHESIS)
+          ),
           end: Token.RIGHT_PARENTHESIS,
           captures: {
-            0: { name: Scope.STYLE_DELIMITER() },
+            0: { name: Scope.STYLE_DELIMITER() }
           },
-          patterns: [include(this.term)],
+          patterns: [include(this.term)]
         },
         {
           begin: words(Token.BEGIN),
           end: words(Token.END),
           captures: {
-            0: { name: Scope.STYLE_DELIMITER() },
+            0: { name: Scope.STYLE_DELIMITER() }
           },
-          patterns: [include(this.attributeIdentifier), include(this.term)],
-        },
-      ],
+          patterns: [include(this.attributeIdentifier), include(this.term)]
+        }
+      ]
     };
   }
 
@@ -1729,44 +1970,44 @@ export class OCaml implements basis.ILanguage {
           begin: words(Token.FOR),
           end: words(Token.DONE),
           beginCaptures: {
-            0: { name: Scope.STYLE_CONTROL() },
+            0: { name: Scope.STYLE_CONTROL() }
           },
           endCaptures: {
-            0: { name: Scope.STYLE_CONTROL() },
+            0: { name: Scope.STYLE_CONTROL() }
           },
           patterns: [
             {
               begin: lastWords(Token.FOR),
               end: this.ops(Token.EQUALS_SIGN),
               endCaptures: {
-                0: { name: Scope.PUNCTUATION_EQUALS() },
+                0: { name: Scope.PUNCTUATION_EQUALS() }
               },
-              patterns: [include(this.pattern)],
+              patterns: [include(this.pattern)]
             },
             {
               begin: this.lastOps(Token.EQUALS_SIGN),
               end: words(group(alt(Token.DOWNTO, Token.TO))),
               endCaptures: {
-                0: { name: Scope.STYLE_CONTROL() },
+                0: { name: Scope.STYLE_CONTROL() }
               },
-              patterns: [include(this.term)],
+              patterns: [include(this.term)]
             },
             {
               begin: lastWords(Token.TO),
               end: words(Token.DO),
               endCaptures: {
-                0: { name: Scope.STYLE_CONTROL() },
+                0: { name: Scope.STYLE_CONTROL() }
               },
-              patterns: [include(this.term)],
+              patterns: [include(this.term)]
             },
             {
               begin: lastWords(Token.DO),
               end: lookAhead(words(Token.DONE)),
-              patterns: [include(this.term)],
-            },
-          ],
-        },
-      ],
+              patterns: [include(this.term)]
+            }
+          ]
+        }
+      ]
     };
   }
 
@@ -1775,8 +2016,8 @@ export class OCaml implements basis.ILanguage {
       match: words(group(alt(capture(Token.FUN), capture(Token.FUNCTION)))),
       captures: {
         1: { name: Scope.TERM_FUN() },
-        2: { name: Scope.TERM_FUNCTION() },
-      },
+        2: { name: Scope.TERM_FUNCTION() }
+      }
     };
   }
 
@@ -1789,39 +2030,59 @@ export class OCaml implements basis.ILanguage {
             seq(
               group(
                 alt(
-                  this.lastOps(Token.EQUALS_SIGN, seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN)),
-                  lookBehind(alt(Token.SEMICOLON, Token.LEFT_PARENTHESIS)),
-                ),
+                  this.lastOps(
+                    Token.EQUALS_SIGN,
+                    seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN)
+                  ),
+                  lookBehind(alt(Token.SEMICOLON, Token.LEFT_PARENTHESIS))
+                )
               ),
-              lookAhead(alt(set(Class.space), words(Token.LET))),
+              lookAhead(alt(set(Class.space), words(Token.LET)))
             ),
-            lastWords(Token.BEGIN, Token.DO, Token.ELSE, Token.IN, Token.STRUCT, Token.THEN, Token.TRY),
-            seq(this.lastOps(seq(Token.COMMERCIAL_AT, Token.COMMERCIAL_AT)), manyOne(set(Class.space))),
+            lastWords(
+              Token.BEGIN,
+              Token.DO,
+              Token.ELSE,
+              Token.IN,
+              Token.STRUCT,
+              Token.THEN,
+              Token.TRY
+            ),
+            seq(
+              this.lastOps(seq(Token.COMMERCIAL_AT, Token.COMMERCIAL_AT)),
+              manyOne(set(Class.space))
+            )
           ),
           end: alt(
             words(group(alt(capture(Token.AND), capture(Token.LET)))),
-            seq(lookAhead(complement(Class.space)), negativeLookAhead(seq(Token.LEFT_PARENTHESIS, Token.ASTERISK))),
+            seq(
+              lookAhead(complement(Class.space)),
+              negativeLookAhead(seq(Token.LEFT_PARENTHESIS, Token.ASTERISK))
+            )
           ),
           endCaptures: {
             1: { name: Scope.ITEM_AND() },
-            2: { name: Scope.TERM_LET() },
+            2: { name: Scope.TERM_LET() }
           },
-          patterns: [include(this.comment)],
+          patterns: [include(this.comment)]
         },
         {
           // let …
           begin: alt(lastWords(Token.AND, Token.LET), capture(Token.LET)),
-          end: alt(words(group(alt(capture(Token.AND), capture(Token.IN)))), this.declEndSans(Token.AND, Token.IN)),
+          end: alt(
+            words(group(alt(capture(Token.AND), capture(Token.IN)))),
+            this.declEndSans(Token.AND, Token.IN)
+          ),
           beginCaptures: {
-            1: { name: Scope.TERM_LET() },
+            1: { name: Scope.TERM_LET() }
           },
           endCaptures: {
             1: { name: Scope.ITEM_AND() },
-            2: { name: Scope.TERM_LET() },
+            2: { name: Scope.TERM_LET() }
           },
-          patterns: [include(this.bindTerm)],
-        },
-      ],
+          patterns: [include(this.bindTerm)]
+        }
+      ]
     };
   }
 
@@ -1830,9 +2091,9 @@ export class OCaml implements basis.ILanguage {
       begin: words(Token.MATCH),
       end: words(Token.WITH),
       captures: {
-        0: { name: Scope.STYLE_CONTROL() },
+        0: { name: Scope.STYLE_CONTROL() }
       },
-      patterns: [include(this.term)],
+      patterns: [include(this.term)]
     };
   }
 
@@ -1841,12 +2102,21 @@ export class OCaml implements basis.ILanguage {
       patterns: [
         {
           begin: lastWords(Token.FUN, Token.FUNCTION, Token.WITH),
-          end: this.ops(alt(capture(Token.VERTICAL_LINE), capture(seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN)))),
+          end: this.ops(
+            alt(
+              capture(Token.VERTICAL_LINE),
+              capture(seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN))
+            )
+          ),
           endCaptures: {
             1: { name: Scope.VERTICAL_LINE() },
-            2: { name: Scope.VERTICAL_LINE() },
+            2: { name: Scope.VERTICAL_LINE() }
           },
-          patterns: [include(this.comment), include(this.attributeIdentifier), include(this.pattern)],
+          patterns: [
+            include(this.comment),
+            include(this.attributeIdentifier),
+            include(this.pattern)
+          ]
         },
         {
           // FIXME: special case of lastOps to prevent starting at [|
@@ -1856,37 +2126,50 @@ export class OCaml implements basis.ILanguage {
                 lookBehind(
                   group(
                     alt(
-                      seq(complement(Token.LEFT_SQUARE_BRACKET, ...this.operatorTokens()), Token.VERTICAL_LINE),
-                      seq(`^`, Token.VERTICAL_LINE),
-                    ),
-                  ),
+                      seq(
+                        complement(
+                          Token.LEFT_SQUARE_BRACKET,
+                          ...this.operatorTokens()
+                        ),
+                        Token.VERTICAL_LINE
+                      ),
+                      seq(`^`, Token.VERTICAL_LINE)
+                    )
+                  )
                 ),
-                negativeLookAhead(set(...this.operatorTokens())),
-              ),
+                negativeLookAhead(set(...this.operatorTokens()))
+              )
             ),
-            this.ops(Token.VERTICAL_LINE),
+            this.ops(Token.VERTICAL_LINE)
           ),
-          end: this.ops(alt(capture(Token.VERTICAL_LINE), capture(seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN)))),
+          end: this.ops(
+            alt(
+              capture(Token.VERTICAL_LINE),
+              capture(seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN))
+            )
+          ),
           beginCaptures: {
-            0: { name: Scope.VERTICAL_LINE() },
+            0: { name: Scope.VERTICAL_LINE() }
           },
           endCaptures: {
             1: { name: Scope.VERTICAL_LINE() },
-            2: { name: Scope.VERTICAL_LINE() },
+            2: { name: Scope.VERTICAL_LINE() }
           },
           patterns: [
             include(this.pattern),
             {
               begin: words(Token.WHEN),
-              end: lookAhead(this.ops(seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN))),
+              end: lookAhead(
+                this.ops(seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN))
+              ),
               beginCaptures: {
-                0: { name: Scope.KEYWORD_WHEN() },
+                0: { name: Scope.KEYWORD_WHEN() }
               },
-              patterns: [include(this.term)],
-            },
-          ],
-        },
-      ],
+              patterns: [include(this.term)]
+            }
+          ]
+        }
+      ]
     };
   }
 
@@ -1897,24 +2180,27 @@ export class OCaml implements basis.ILanguage {
           begin: this.ops(Token.NUMBER_SIGN),
           end: this.identLower(),
           beginCaptures: {
-            0: { name: Scope.STYLE_KEYWORD() },
+            0: { name: Scope.STYLE_KEYWORD() }
           },
           endCaptures: {
-            0: { name: Scope.NAME_METHOD() },
-          },
+            0: { name: Scope.NAME_METHOD() }
+          }
         },
         {
           match: seq(Token.LESS_THAN_SIGN, Token.HYPHEN_MINUS),
           captures: {
-            0: { name: `${Scope.STYLE_CONTROL()} ${Scope.STYLE_BOLD()}` },
-          },
+            0: { name: `${Scope.STYLE_CONTROL()} ${Scope.STYLE_BOLD()}` }
+          }
         },
         {
-          match: alt(capture(alt(Token.COMMA, this.operator())), capture(Token.SEMICOLON)),
+          match: alt(
+            capture(alt(Token.COMMA, this.operator())),
+            capture(Token.SEMICOLON)
+          ),
           captures: {
             1: { name: Scope.STYLE_OPERATOR() },
-            2: { name: Scope.STYLE_OPERATOR() },
-          },
+            2: { name: Scope.STYLE_OPERATOR() }
+          }
         },
         {
           match: words(
@@ -1929,13 +2215,13 @@ export class OCaml implements basis.ILanguage {
                 Token.LXOR,
                 Token.MOD,
                 Token.NEW,
-                Token.OR,
-              ),
-            ),
+                Token.OR
+              )
+            )
           ),
-          name: Scope.TERM_BUILTIN(),
-        },
-      ],
+          name: Scope.TERM_BUILTIN()
+        }
+      ]
     };
   }
 
@@ -1945,20 +2231,20 @@ export class OCaml implements basis.ILanguage {
       end: alt(Token.COLON, lookAhead(complement(Class.space, Token.COLON))),
       applyEndPatternLast: true,
       beginCaptures: {
-        0: { name: Scope.STYLE_OPERATOR() },
+        0: { name: Scope.STYLE_OPERATOR() }
       },
       endCaptures: {
-        0: { name: Scope.STYLE_KEYWORD() },
+        0: { name: Scope.STYLE_KEYWORD() }
       },
       patterns: [
         {
           begin: this.lastOps(Token.QUESTION_MARK, Token.TILDE),
           end: this.identLower(),
           endCaptures: {
-            0: { name: Scope.NAME_FIELD() },
-          },
-        },
-      ],
+            0: { name: Scope.NAME_FIELD() }
+          }
+        }
+      ]
     };
   }
 
@@ -1967,9 +2253,9 @@ export class OCaml implements basis.ILanguage {
       begin: words(Token.TRY),
       end: words(Token.WITH),
       captures: {
-        0: { name: Scope.STYLE_CONTROL() },
+        0: { name: Scope.STYLE_CONTROL() }
       },
-      patterns: [include(this.term)],
+      patterns: [include(this.term)]
     };
   }
 
@@ -1980,28 +2266,28 @@ export class OCaml implements basis.ILanguage {
           begin: words(Token.WHILE),
           end: words(Token.DONE),
           beginCaptures: {
-            0: { name: Scope.STYLE_CONTROL() },
+            0: { name: Scope.STYLE_CONTROL() }
           },
           endCaptures: {
-            0: { name: Scope.STYLE_CONTROL() },
+            0: { name: Scope.STYLE_CONTROL() }
           },
           patterns: [
             {
               begin: lastWords(Token.WHILE),
               end: words(Token.DO),
               endCaptures: {
-                0: { name: Scope.STYLE_CONTROL() },
+                0: { name: Scope.STYLE_CONTROL() }
               },
-              patterns: [include(this.term)],
+              patterns: [include(this.term)]
             },
             {
               begin: lastWords(Token.DO),
               end: lookAhead(words(Token.DONE)),
-              patterns: [include(this.term)],
-            },
-          ],
-        },
-      ],
+              patterns: [include(this.term)]
+            }
+          ]
+        }
+      ]
     };
   }
 
@@ -2011,7 +2297,7 @@ export class OCaml implements basis.ILanguage {
         include(this.comment),
         {
           match: words(Token.NONREC),
-          name: Scope.KEYWORD_REC(),
+          name: Scope.KEYWORD_REC()
         },
         include(this.pathModulePrefixExtended),
         include(this.typeLabel),
@@ -2020,8 +2306,8 @@ export class OCaml implements basis.ILanguage {
         include(this.typeParens),
         include(this.typePolymorphicVariant),
         include(this.typeRecord),
-        include(this.typeConstructor),
-      ],
+        include(this.typeConstructor)
+      ]
     };
   }
 
@@ -2033,7 +2319,12 @@ export class OCaml implements basis.ILanguage {
             capture(Token.LOW_LINE),
             capture(this.identLower()),
             seq(capture(Token.APOSTROPHE), capture(this.identLower())),
-            lookBehind(alt(seq(complement(Token.ASTERISK), Token.RIGHT_PARENTHESIS), Token.RIGHT_SQUARE_BRACKET)),
+            lookBehind(
+              alt(
+                seq(complement(Token.ASTERISK), Token.RIGHT_PARENTHESIS),
+                Token.RIGHT_SQUARE_BRACKET
+              )
+            )
           ),
           end: alt(
             lookAhead(
@@ -2053,27 +2344,35 @@ export class OCaml implements basis.ILanguage {
                 Token.RIGHT_PARENTHESIS,
                 Token.RIGHT_SQUARE_BRACKET,
                 Token.SEMICOLON,
-                Token.VERTICAL_LINE,
-              ),
+                Token.VERTICAL_LINE
+              )
             ),
             seq(
               capture(this.identLower()),
               many(seq(Class.space)),
-              negativeLookAhead(alt(seq(Token.LEFT_PARENTHESIS, Token.ASTERISK), set(Class.word))),
+              negativeLookAhead(
+                alt(
+                  seq(Token.LEFT_PARENTHESIS, Token.ASTERISK),
+                  set(Class.word)
+                )
+              )
             ),
-            this.declEnd(),
+            this.declEnd()
           ),
           beginCaptures: {
             1: { name: Scope.META_COMMENT() },
             3: { name: Scope.PUNCTUATION_APOSTROPHE() },
-            4: { name: Scope.VARIABLE_TYPE() },
+            4: { name: Scope.VARIABLE_TYPE() }
           },
           endCaptures: {
-            1: { name: Scope.TYPE_CONSTRUCTOR() },
+            1: { name: Scope.TYPE_CONSTRUCTOR() }
           },
-          patterns: [include(this.comment), include(this.pathModulePrefixExtended)],
-        },
-      ],
+          patterns: [
+            include(this.comment),
+            include(this.pathModulePrefixExtended)
+          ]
+        }
+      ]
     };
   }
 
@@ -2085,19 +2384,21 @@ export class OCaml implements basis.ILanguage {
             capture(opt(Token.QUESTION_MARK)),
             capture(this.identLower()),
             many(set(Class.space)),
-            capture(this.ops(Token.COLON)),
+            capture(this.ops(Token.COLON))
           ),
-          end: lookAhead(this.ops(seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN))),
+          end: lookAhead(
+            this.ops(seq(Token.HYPHEN_MINUS, Token.GREATER_THAN_SIGN))
+          ),
           captures: {
             1: {
-              name: `keyword ${Scope.STYLE_BOLD()} ${Scope.STYLE_ITALICS()}`,
+              name: `keyword ${Scope.STYLE_BOLD()} ${Scope.STYLE_ITALICS()}`
             },
             2: { name: `${Scope.NAME_FIELD()} ${Scope.STYLE_ITALICS()}` },
-            3: { name: Scope.STYLE_KEYWORD() },
+            3: { name: Scope.STYLE_KEYWORD() }
           },
-          patterns: [include(this.type)],
-        },
-      ],
+          patterns: [include(this.type)]
+        }
+      ]
     };
   }
 
@@ -2106,9 +2407,12 @@ export class OCaml implements basis.ILanguage {
       begin: words(Token.MODULE),
       end: lookAhead(Token.RIGHT_PARENTHESIS),
       beginCaptures: {
-        0: { name: Scope.TERM_MODULE() },
+        0: { name: Scope.TERM_MODULE() }
       },
-      patterns: [include(this.pathModuleExtended), include(this.signatureConstraints)],
+      patterns: [
+        include(this.pathModuleExtended),
+        include(this.signatureConstraints)
+      ]
     };
   }
 
@@ -2117,7 +2421,7 @@ export class OCaml implements basis.ILanguage {
       begin: Token.LESS_THAN_SIGN,
       end: Token.GREATER_THAN_SIGN,
       captures: {
-        0: { name: `${Scope.TERM_CONSTRUCTOR()} ${Scope.STYLE_BOLD()}` },
+        0: { name: `${Scope.TERM_CONSTRUCTOR()} ${Scope.STYLE_BOLD()}` }
       },
       patterns: [
         {
@@ -2126,27 +2430,30 @@ export class OCaml implements basis.ILanguage {
           endCaptures: {
             1: { name: Scope.PUNCTUATION_COLON() },
             3: { name: Scope.STYLE_OPERATOR() },
-            4: { name: Scope.STYLE_OPERATOR() },
+            4: { name: Scope.STYLE_OPERATOR() }
           },
           patterns: [
             include(this.comment),
             include(this.pathModulePrefixSimple),
             {
               match: this.identLower(),
-              name: `${Scope.NAME_FIELD()} ${Scope.STYLE_ITALICS()}`,
-            },
-          ],
+              name: `${Scope.NAME_FIELD()} ${Scope.STYLE_ITALICS()}`
+            }
+          ]
         },
         {
           begin: this.lastOps(Token.COLON),
-          end: alt(capture(Token.SEMICOLON), lookAhead(Token.GREATER_THAN_SIGN)),
+          end: alt(
+            capture(Token.SEMICOLON),
+            lookAhead(Token.GREATER_THAN_SIGN)
+          ),
           endCaptures: {
             1: { name: Scope.STYLE_OPERATOR() },
-            2: { name: Scope.PUNCTUATION_EQUALS() },
+            2: { name: Scope.PUNCTUATION_EQUALS() }
           },
-          patterns: [include(this.type)],
-        },
-      ],
+          patterns: [include(this.type)]
+        }
+      ]
     };
   }
 
@@ -2155,9 +2462,9 @@ export class OCaml implements basis.ILanguage {
       patterns: [
         {
           match: alt(Token.COMMA, Token.SEMICOLON, this.operator()),
-          name: Scope.OPERATOR_TYPE(),
-        },
-      ],
+          name: Scope.OPERATOR_TYPE()
+        }
+      ]
     };
   }
 
@@ -2166,16 +2473,16 @@ export class OCaml implements basis.ILanguage {
       begin: Token.LEFT_PARENTHESIS,
       end: Token.RIGHT_PARENTHESIS,
       captures: {
-        0: { name: Scope.STYLE_DELIMITER() },
+        0: { name: Scope.STYLE_DELIMITER() }
       },
       patterns: [
         {
           match: Token.COMMA,
-          name: Scope.STYLE_OPERATOR(),
+          name: Scope.STYLE_OPERATOR()
         },
         include(this.typeModule),
-        include(this.type),
-      ],
+        include(this.type)
+      ]
     };
   }
 
@@ -2183,7 +2490,7 @@ export class OCaml implements basis.ILanguage {
     return {
       begin: Token.LEFT_SQUARE_BRACKET,
       end: Token.RIGHT_SQUARE_BRACKET,
-      patterns: [],
+      patterns: []
     };
   }
 
@@ -2195,8 +2502,8 @@ export class OCaml implements basis.ILanguage {
     return {
       match: this.identUpper(),
       captures: {
-        0: { name: Scope.VARIABLE_PATTERN() },
-      },
+        0: { name: Scope.VARIABLE_PATTERN() }
+      }
     };
   }
 
@@ -2205,8 +2512,8 @@ export class OCaml implements basis.ILanguage {
       match: alt(capture(words(Token.LOW_LINE)), capture(this.identLower())),
       captures: {
         1: { name: Scope.META_COMMENT() },
-        2: { name: Scope.VARIABLE_PATTERN() },
-      },
+        2: { name: Scope.VARIABLE_PATTERN() }
+      }
     };
   }
 
@@ -2215,7 +2522,11 @@ export class OCaml implements basis.ILanguage {
       name: `imandra`,
       scopeName: `source.imandra`,
       fileTypes: [`.iml`],
-      patterns: [include(this.comment), include(this.pragma), include(this.decl)],
+      patterns: [
+        include(this.comment),
+        include(this.pragma),
+        include(this.decl)
+      ],
       repository: {
         attribute: this.attribute(),
         attributeIdentifier: this.attributeIdentifier(),
@@ -2304,8 +2615,8 @@ export class OCaml implements basis.ILanguage {
         typePolymorphicVariant: this.typePolymorphicVariant(),
         typeRecord: this.typeRecord(),
         variableModule: this.variableModule(),
-        variablePattern: this.variablePattern(),
-      },
+        variablePattern: this.variablePattern()
+      }
     };
   }
 }

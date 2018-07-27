@@ -6,92 +6,94 @@ import * as client from "./client";
 const imandraConfiguration = {
   indentationRules: {
     decreaseIndentPattern: /^(.*\*\/)?\s*\}.*$/,
-    increaseIndentPattern: /^.*\{[^}"']*$/,
+    increaseIndentPattern: /^.*\{[^}"']*$/
   },
   onEnterRules: [
     {
       beforeText: /^.*\b(switch|try)\b[^\{]*{\s*$/,
       action: {
         indentAction: vscode.IndentAction.IndentOutdent,
-        appendText: "| ",
-      },
+        appendText: "| "
+      }
     },
     {
       beforeText: /^\s*\/\*\*(?!\/)([^\*]|\*(?!\/))*$/,
       afterText: /^\s*\*\/$/,
       action: {
         indentAction: vscode.IndentAction.IndentOutdent,
-        appendText: " * ",
-      },
+        appendText: " * "
+      }
     },
     {
       beforeText: /^\s*\/\*\*(?!\/)([^\*]|\*(?!\/))*$/,
       action: {
         indentAction: vscode.IndentAction.None,
-        appendText: " * ",
-      },
+        appendText: " * "
+      }
     },
     {
       beforeText: /^(\t|(\ \ ))*\ \*(\ ([^\*]|\*(?!\/))*)?$/,
       action: {
         indentAction: vscode.IndentAction.None,
-        appendText: "* ",
-      },
+        appendText: "* "
+      }
     },
     {
       beforeText: /^(\t|(\ \ ))*\ \*\/\s*$/,
       action: {
         indentAction: vscode.IndentAction.None,
-        removeText: 1,
-      },
+        removeText: 1
+      }
     },
     {
       beforeText: /^(\t|(\ \ ))*\ \*[^/]*\*\/\s*$/,
       action: {
         indentAction: vscode.IndentAction.None,
-        removeText: 1,
-      },
+        removeText: 1
+      }
     },
     {
       beforeText: /^.*\bfun\b\s*$/,
       action: {
         indentAction: vscode.IndentAction.None,
-        appendText: "| ",
-      },
+        appendText: "| "
+      }
     },
     {
       beforeText: /^\s*\btype\b.*=(.*[^;\\{<]\s*)?$/,
       afterText: /^\s*$/,
       action: {
         indentAction: vscode.IndentAction.None,
-        appendText: "  | ",
-      },
+        appendText: "  | "
+      }
     },
     {
       beforeText: /^(\t|[ ]{2})*[\|]([^!$%&*+-/<=>?@^~;}])*(?:$|=>.*[^\s\{]\s*$)/m,
       action: {
         indentAction: vscode.IndentAction.None,
-        appendText: "| ",
-      },
+        appendText: "| "
+      }
     },
     {
       beforeText: /^(\t|(\ \ ))*\|(.*[;])$/,
       action: {
-        indentAction: vscode.IndentAction.Outdent,
-      },
+        indentAction: vscode.IndentAction.Outdent
+      }
     },
     {
       beforeText: /^(\t|(\ \ ))*;\s*$/,
       action: {
-        indentAction: vscode.IndentAction.Outdent,
-      },
-    },
+        indentAction: vscode.IndentAction.Outdent
+      }
+    }
   ],
-  wordPattern: /\\[^\s]+|[^\\\s\d(){}\[\]#.][^\\\s(){}\[\]#.]*/,
+  wordPattern: /\\[^\s]+|[^\\\s\d(){}\[\]#.][^\\\s(){}\[\]#.]*/
 };
 
 export async function activate(context: vscode.ExtensionContext) {
-  context.subscriptions.push(vscode.languages.setLanguageConfiguration("imandra", imandraConfiguration));
+  context.subscriptions.push(
+    vscode.languages.setLanguageConfiguration("imandra", imandraConfiguration)
+  );
   await client.launch(context);
 }
 
