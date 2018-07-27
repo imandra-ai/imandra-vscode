@@ -6,7 +6,7 @@ import * as LSP from "vscode-languageserver-protocol";
 const SHOW_ALL_STR = "Show Entire Environment";
 export function register(context: vscode.ExtensionContext, languageClient: client.LanguageClient): void {
   context.subscriptions.push(
-    vscode.commands.registerTextEditorCommand("reason.showProjectEnv", async editor => {
+    vscode.commands.registerTextEditorCommand("imandra.showProjectEnv", async editor => {
       const docURI: LSP.TextDocumentIdentifier = {
         uri: editor.document.uri.toString(),
       };

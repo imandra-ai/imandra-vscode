@@ -5,7 +5,7 @@ import * as LSP from "vscode-languageserver-protocol";
 
 export function register(context: vscode.ExtensionContext, languageClient: client.LanguageClient): void {
   context.subscriptions.push(
-    vscode.commands.registerTextEditorCommand("reason.showAvailableLibraries", async editor => {
+    vscode.commands.registerTextEditorCommand("imandra.showAvailableLibraries", async editor => {
       const docURI: LSP.TextDocumentIdentifier = {
         uri: editor.document.uri.toString(),
       };
