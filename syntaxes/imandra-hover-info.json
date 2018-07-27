@@ -1,5 +1,5 @@
 {
-  "scopeName": "source.ocaml.hover.info",
+  "scopeName": "source.imandra.hover.info",
   "patterns": [
     {
       "begin": "\\b(position)\\b(:)",

@@ -17,22 +17,15 @@
     "vscode": "^1.21.0"
   },
   "categories": [
-    "Formatters",
     "Programming Languages",
-    "Linters",
-    "Snippets"
+    "Formal Verification"
   ],
   "keywords": [
-    "ocaml",
-    "reason",
-    "reasonml",
-    "merlin",
     "imandra"
   ],
   "icon": "assets/logo.png",
   "activationEvents": [
-    "onLanguage:ocaml",
-    "onLanguage:reason"
+    "onLanguage:imandra"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -178,74 +171,9 @@
     },
     "grammars": [
       {
-        "language": "ocaml",
-        "scopeName": "source.ocaml",
-        "path": "./syntaxes/ocaml.json"
-      },
-      {
-        "language": "ocaml.hover.info",
-        "scopeName": "source.ocaml.hover.info",
-        "path": "./syntaxes/ocaml-hover-info.json"
-      },
-      {
-        "language": "ocaml.hover.type",
-        "scopeName": "source.ocaml.hover.type",
-        "path": "./syntaxes/ocaml-hover-type.json"
-      },
-      {
-        "language": "ocaml.merlin",
-        "scopeName": "source.ocaml.merlin",
-        "path": "./syntaxes/merlin.json"
-      },
-      {
-        "language": "ocaml.ocamlbuild",
-        "scopeName": "source.ocaml.ocamlbuild",
-        "path": "./syntaxes/ocamlbuild.json"
-      },
-      {
-        "language": "ocaml.opam",
-        "scopeName": "source.ocaml.opam",
-        "path": "./syntaxes/opam.json"
-      },
-      {
-        "language": "reason",
-        "scopeName": "source.reason",
-        "path": "./syntaxes/reason.json"
-      },
-      {
-        "language": "reason.hover.info",
-        "scopeName": "source.reason.hover.info",
-        "path": "./syntaxes/reason-hover-info.json"
-      },
-      {
-        "language": "reason.hover.signature",
-        "scopeName": "source.reason.hover.signature",
-        "path": "./syntaxes/reason-hover-signature.json"
-      },
-      {
-        "language": "reason.hover.type",
-        "scopeName": "source.reason.hover.type",
-        "path": "./syntaxes/reason-hover-type.json"
-      },
-      {
-        "scopeName": "markdown.reason.codeblock",
-        "path": "./syntaxes/reason-markdown-codeblock.json",
-        "injectTo": [
-          "text.html.markdown"
-        ],
-        "embeddedLanguages": {
-          "meta.embedded.block.reason": "reason"
-        }
-      },
-      {
-        "scopeName": "markdown.ocaml.codeblock",
-        "path": "./syntaxes/ocaml-markdown-codeblock.json",
-        "injectTo": [
-          "text.html.markdown"
-        ],
-        "embeddedLanguages": {
-          "meta.embedded.block.ocaml": "ocaml"
-        }
+        "language": "imandra",
+        "scopeName": "source.imandra",
+        "path": "./syntaxes/imandra.json"
       }
     ],
     "languages": [
@@ -257,75 +185,13 @@
         "extensions": [
           ".iml"
         ],
-        "configuration": "./iml.configuration.json"
+        "configuration": "./imandra.configuration.json"
       },
       {
-        "id": "iml.hover.info"
+        "id": "imandra.hover.info"
       },
       {
-        "id": "iml.hover.type"
-      },
-      {
-        "id": "iml.merlin",
-        "aliases": [
-          "Merlin"
-        ],
-        "extensions": [
-          "merlin"
-        ]
-      },
-      {
-        "id": "ocaml.ocamlbuild",
-        "aliases": [
-          "OCamlbuild"
-        ],
-        "extensions": [
-          "_tags"
-        ]
-      },
-      {
-        "id": "ocaml.opam",
-        "aliases": [
-          "OPAM"
-        ],
-        "extensions": [
-          "opam"
-        ]
-      },
-      {
-        "id": "reason",
-        "aliases": [
-          "Reason"
-        ],
-        "extensions": [
-          ".re",
-          ".rei"
-        ],
-        "configuration": "./reason.configuration.json"
-      },
-      {
-        "id": "reason.hover.info"
-      },
-      {
-        "id": "reason.hover.signature"
-      },
-      {
-        "id": "reason.hover.type"
-      }
-    ],
-    "menus": {
-      "editor/context": [
-        {
-          "command": "reason.caseSplit",
-          "group": "reason",
-          "when": "editorTextFocus && resourceLangId == reason"
-        }
-      ]
-    },
-    "snippets": [
-      {
-        "language": "reason",
-        "path": "./snippets/reason.json"
+        "id": "imandra.hover.type"
       }
     ],
     "problemMatchers": [

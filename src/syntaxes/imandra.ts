@@ -2212,9 +2212,9 @@ export class OCaml implements basis.ILanguage {
 
   public render(): schema.IGrammar {
     return {
-      name: `OCaml`,
-      scopeName: `source.ocaml`,
-      fileTypes: [`.ml`, `.mli`],
+      name: `imandra`,
+      scopeName: `source.imandra`,
+      fileTypes: [`.iml`],
       patterns: [include(this.comment), include(this.pragma), include(this.decl)],
       repository: {
         attribute: this.attribute(),

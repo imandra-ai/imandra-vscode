@@ -2,7 +2,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const languages = ["ocaml"];
+const languages = ["imandra"];
 
 function inPath(language) {
   return path.resolve(".", "out", "src", "syntaxes", language);
