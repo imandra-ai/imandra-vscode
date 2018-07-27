@@ -3,7 +3,7 @@
 import * as vscode from "vscode";
 import * as client from "./client";
 
-const reasonConfiguration = {
+const imandraConfiguration = {
   indentationRules: {
     decreaseIndentPattern: /^(.*\*\/)?\s*\}.*$/,
     increaseIndentPattern: /^.*\{[^}"']*$/,
@@ -91,7 +91,7 @@ const reasonConfiguration = {
 };
 
 export async function activate(context: vscode.ExtensionContext) {
-  context.subscriptions.push(vscode.languages.setLanguageConfiguration("reason", reasonConfiguration));
+  context.subscriptions.push(vscode.languages.setLanguageConfiguration("imandra", imandraConfiguration));
   await client.launch(context);
 }
 

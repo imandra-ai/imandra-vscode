@@ -10,7 +10,7 @@ class ClientWindow implements vscode.Disposable {
   constructor() {
     this.merlin = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
     this.merlin.text = "$(hubot) [loading]";
-    this.merlin.command = "reason.showMerlinFiles";
+    this.merlin.command = "imandra.showMerlinFiles";
     this.merlin.show();
     return this;
   }
@@ -29,7 +29,7 @@ class ErrorHandler {
 }
 
 export async function launch(context: vscode.ExtensionContext): Promise<void> {
-  const reasonConfig = vscode.workspace.getConfiguration("reason");
+  const reasonConfig = vscode.workspace.getConfiguration("imandra");
   const module = context.asAbsolutePath(path.join("node_modules", "ocaml-language-server", "bin", "server"));
   const options = { execArgv: ["--nolazy", "--inspect=6009"] };
   const transport = client.TransportKind.ipc;
@@ -40,33 +40,27 @@ export async function launch(context: vscode.ExtensionContext): Promise<void> {
     transport,
   };
   const serverOptions = { run, debug };
-  const languages = reasonConfig.get<string[]>("server.languages", ["ocaml", "reason"]);
+  const languages = reasonConfig.get<string[]>("server.languages", ["imandra"]);
   const documentSelector = flatMap(languages, (language: string) => [
     { language, scheme: "file" },
     { language, scheme: "untitled" },
   ]);
 
   const clientOptions: client.LanguageClientOptions = {
-    diagnosticCollectionName: "ocaml-language-server",
+    diagnosticCollectionName: "imandra-language-server",
     documentSelector,
     errorHandler: new ErrorHandler(),
     initializationOptions: reasonConfig,
-    outputChannelName: "OCaml Language Server",
+    outputChannelName: "Imandra Language Server",
     stdioEncoding: "utf8",
     synchronize: {
       configurationSection: "reason",
       fileEvents: [
-        vscode.workspace.createFileSystemWatcher("**/.merlin"),
-        vscode.workspace.createFileSystemWatcher("**/*.ml"),
-        vscode.workspace.createFileSystemWatcher("**/*.re"),
-        vscode.workspace.createFileSystemWatcher("**/command-exec"),
-        vscode.workspace.createFileSystemWatcher("**/command-exec.bat"),
-        vscode.workspace.createFileSystemWatcher("**/_build"),
-        vscode.workspace.createFileSystemWatcher("**/_build/*"),
+        vscode.workspace.createFileSystemWatcher("**/.iml")
       ],
     },
   };
-  const languageClient = new client.LanguageClient("Reason", serverOptions, clientOptions);
+  const languageClient = new client.LanguageClient("imandra", serverOptions, clientOptions);
   const window = new ClientWindow();
   const session = languageClient.start();
   context.subscriptions.push(window);
