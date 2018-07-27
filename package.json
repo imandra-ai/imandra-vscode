@@ -157,13 +157,13 @@
           "type": "array",
           "items": {
             "enum": [
-              "iml"
+              "imandra"
             ]
           },
           "default": [
-            "iml"
+            "imandra"
           ],
-          "maxItems": 2,
+          "maxItems": 1,
           "uniqueItems": true,
           "description": "The list of languages enable support for in the language server."
         }
