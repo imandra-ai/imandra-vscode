@@ -26,7 +26,7 @@ const {
   words,
 } = basis;
 
-export class OCaml implements basis.ILanguage {
+export class Imandra implements basis.ILanguage {
   constructor() {
     return this;
   }
@@ -2310,4 +2310,4 @@ export class OCaml implements basis.ILanguage {
   }
 }
 
-export default new OCaml().render();
+export default new Imandra().render();

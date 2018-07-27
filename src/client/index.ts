@@ -29,7 +29,7 @@ class ErrorHandler {
 }
 
 export async function launch(context: vscode.ExtensionContext): Promise<void> {
-  const reasonConfig = vscode.workspace.getConfiguration("imandra");
+  const imandraConfig = vscode.workspace.getConfiguration("imandra");
   const module = context.asAbsolutePath(path.join("node_modules", "ocaml-language-server", "bin", "server"));
   const options = { execArgv: ["--nolazy", "--inspect=6009"] };
   const transport = client.TransportKind.ipc;
@@ -40,22 +40,22 @@ export async function launch(context: vscode.ExtensionContext): Promise<void> {
     transport,
   };
   const serverOptions = { run, debug };
-  const languages = reasonConfig.get<string[]>("server.languages", ["imandra"]);
+  const languages = imandraConfig.get<string[]>("server.languages", ["imandra"]);
   const documentSelector = flatMap(languages, (language: string) => [
     { language, scheme: "file" },
     { language, scheme: "untitled" },
   ]);
 
   const clientOptions: client.LanguageClientOptions = {
-    diagnosticCollectionName: "imandra-language-server",
+    diagnosticCollectionName: "ocaml-language-server",
     documentSelector,
     errorHandler: new ErrorHandler(),
-    initializationOptions: reasonConfig,
-    outputChannelName: "Imandra Language Server",
+    initializationOptions: imandraConfig,
+    outputChannelName: "OCaml Language Server",
     stdioEncoding: "utf8",
     synchronize: {
-      configurationSection: "reason",
-      fileEvents: [vscode.workspace.createFileSystemWatcher("**/.iml")],
+      configurationSection: "imandra",
+      fileEvents: [vscode.workspace.createFileSystemWatcher("**/*.iml")],
     },
   };
   const languageClient = new client.LanguageClient("imandra", serverOptions, clientOptions);
