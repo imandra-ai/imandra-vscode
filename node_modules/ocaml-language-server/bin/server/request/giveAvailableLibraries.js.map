@@ -1,0 +1,1 @@
+{"version":3,"file":"giveAvailableLibraries.js","sourceRoot":"","sources":["../../../src/bin/server/request/giveAvailableLibraries.ts"],"names":[],"mappings":";;AACA,sCAAsC;AAGtC,mBAAwB,OAAgB;IACtC,OAAO,KAAK,CAAC,EAAE,CAAC,OAAO,CAAC,qBAAqB,CAAC,OAAO,EAAE,KAAK,CAAC,CAAC;AAChE,CAAC;AAFD,4BAEC"}
