@@ -6,6 +6,6 @@ Imandra support for Visual Studio Code
 
 ```
 npm install
-tsc -p ./
+npm run build
 vsce package
 ```
