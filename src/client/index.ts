@@ -1,4 +1,3 @@
-import flatMap = require("lodash.flatmap");
 import * as path from "path";
 import * as vscode from "vscode";
 import * as client from "vscode-languageclient";
@@ -40,15 +39,10 @@ export async function launch(context: vscode.ExtensionContext): Promise<void> {
     transport,
   };
   const serverOptions = { run, debug };
-  const languages = imandraConfig.get<string[]>("server.languages", ["imandra"]);
-  const documentSelector = flatMap(languages, (language: string) => [
-    { language, scheme: "file" },
-    { language, scheme: "untitled" },
-  ]);
 
   const clientOptions: client.LanguageClientOptions = {
     diagnosticCollectionName: "ocaml-language-server",
-    documentSelector,
+    documentSelector: [{ language: "imandra", scheme: "file" }, { language: "imandra", scheme: "untitled" }],
     errorHandler: new ErrorHandler(),
     initializationOptions: imandraConfig,
     outputChannelName: "OCaml Language Server",

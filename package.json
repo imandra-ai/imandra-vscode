@@ -152,20 +152,6 @@
           "type": "string",
           "default": "rtop",
           "description": "The path to the `rtop` binary."
-        },
-        "imandra.server.languages": {
-          "type": "array",
-          "items": {
-            "enum": [
-              "imandra"
-            ]
-          },
-          "default": [
-            "imandra"
-          ],
-          "maxItems": 1,
-          "uniqueItems": true,
-          "description": "The list of languages enable support for in the language server."
         }
       }
     },

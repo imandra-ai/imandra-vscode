@@ -18,7 +18,9 @@
         "focus": false,
         "panel": "dedicated"
       },
-      "problemMatcher": ["$tslint5", "$tsc"]
+      "problemMatcher": [
+        "$tsc"
+      ]
     }
   ]
 }
