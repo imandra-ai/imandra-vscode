@@ -14,5 +14,9 @@
   "search.exclude": {
     "syntaxes": false
   },
+  "reason.server.languages": [
+    "ocaml",
+    "imandra"
+  ],
   "typescript.tsdk": "./node_modules/typescript/lib"
 }

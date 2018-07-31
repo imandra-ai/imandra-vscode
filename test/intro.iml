@@ -13,10 +13,15 @@ let f x =
     103
   else 99;;
 
+  let neet x =
+  let _y = 0 in
+   if (true) then 2 else 3
 
-
-  verify (fun x -> g x <= 122);;
+  verify (fun x -> g x <= 122)
 
   verify (fun x -> f x <> 158);;
 
-  Decompose.top "f";;
+  theorem aaa x = (x = 0 ==> x >0);;
+
+  Decompose.top "f"
+  
