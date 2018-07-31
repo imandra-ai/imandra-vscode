@@ -1,6 +1,6 @@
 let g x =
   if x > 22 then 9
-  else 100 + x
+  else 100 + x;;
 
 let f x =
   if x > 99 then
@@ -11,10 +11,12 @@ let f x =
   then g x + 20
   else if x > -2 then
     103
-  else 99
+  else 99;;
 
-  verify (fun x -> g x <= 122)
 
-  verify (fun x -> f x <> 158)
 
-  Decompose.top "f"
+  verify (fun x -> g x <= 122);;
+
+  verify (fun x -> f x <> 158);;
+
+  Decompose.top "f";;
