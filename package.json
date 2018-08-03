@@ -57,7 +57,6 @@
     "vscode:prepublish": "node script/syntax.js"
   },
   "devDependencies": {
-    "@types/lodash.flatmap": "^4.5.3",
     "@types/node": "9.6.2",
     "@types/pegjs": "0.10.0",
     "prettier": "1.11.1",
@@ -66,8 +65,6 @@
     "vscode": "1.1.14"
   },
   "dependencies": {
-    "lodash.flatmap": "^4.5.0",
-    "ocaml-language-server": "1.0.35",
     "pegjs": "0.10.0",
     "vscode-jsonrpc": "3.6.0",
     "vscode-languageclient": "4.0.1",
