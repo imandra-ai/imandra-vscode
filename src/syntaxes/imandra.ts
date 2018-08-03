@@ -91,6 +91,9 @@ export class Imandra implements basis.ILanguage {
       Token.INHERIT,
       Token.INITIALIZER,
       Token.LET,
+      Token.VERIFY,
+      Token.LEMMA,
+      Token.THEOREM,
       Token.METHOD,
       Token.MODULE,
       Token.OPEN,
@@ -542,7 +545,19 @@ export class Imandra implements basis.ILanguage {
     return {
       patterns: [
         {
-          begin: alt(this.lastOps("!"), lastWords(Token.AND, Token.EXTERNAL, Token.LET, Token.METHOD, Token.VAL)),
+          begin: alt(
+            this.lastOps("!"),
+            lastWords(
+              Token.AND,
+              Token.EXTERNAL,
+              Token.LET,
+              Token.METHOD,
+              Token.VAL,
+              Token.LEMMA,
+              Token.VERIFY,
+              Token.THEOREM,
+            ),
+          ),
           end: alt(
             capture(words(Token.MODULE)),
             capture(words(Token.OPEN)),
@@ -557,7 +572,19 @@ export class Imandra implements basis.ILanguage {
           },
           patterns: [
             {
-              begin: alt(this.lastOps("!"), lastWords(Token.AND, Token.EXTERNAL, Token.LET, Token.METHOD, Token.VAL)),
+              begin: alt(
+                this.lastOps("!"),
+                lastWords(
+                  Token.AND,
+                  Token.EXTERNAL,
+                  Token.LET,
+                  Token.LEMMA,
+                  Token.VERIFY,
+                  Token.THEOREM,
+                  Token.METHOD,
+                  Token.VAL,
+                ),
+              ),
               end: alt(
                 lookAhead(words(group(alt(Token.MODULE, Token.OPEN)))),
                 lookAhead(
@@ -943,7 +970,18 @@ export class Imandra implements basis.ILanguage {
   public declTerm(): schema.Rule {
     return {
       begin: seq(
-        words(group(alt(capture(alt(Token.EXTERNAL, Token.VAL)), capture(Token.METHOD), capture(Token.LET)))),
+        words(
+          group(
+            alt(
+              capture(alt(Token.EXTERNAL, Token.VAL)),
+              capture(Token.METHOD),
+              capture(Token.LET),
+              capture(Token.LEMMA),
+              capture(Token.VERIFY),
+              capture(Token.THEOREM),
+            ),
+          ),
+        ),
         capture(opt("!")),
       ),
       end: this.declEndItem(),
@@ -952,6 +990,9 @@ export class Imandra implements basis.ILanguage {
         2: { name: Scope.ITEM_METHOD() },
         3: { name: Scope.ITEM_LET() },
         4: { name: Scope.STYLE_OPERATOR() },
+        5: { name: Scope.ITEM_VERIFY() },
+        6: { name: Scope.ITEM_THEOREM() },
+        7: { name: Scope.ITEM_LEMMA() },
       },
       endCaptures: {
         0: { name: Scope.STYLE_DELIMITER() },
@@ -1655,7 +1696,7 @@ export class Imandra implements basis.ILanguage {
 
   public term(): schema.Rule {
     return {
-      patterns: [include(this.termLet), include(this.termAtomic)],
+      patterns: [include(this.termLet), include(this.termAtomic), include(this.termVerifyTheoremLemma)],
     };
   }
 
@@ -1818,6 +1859,20 @@ export class Imandra implements basis.ILanguage {
           endCaptures: {
             1: { name: Scope.ITEM_AND() },
             2: { name: Scope.TERM_LET() },
+          },
+          patterns: [include(this.bindTerm)],
+        },
+      ],
+    };
+  }
+
+  public termVerifyTheoremLemma(): schema.Rule {
+    return {
+      patterns: [
+        {
+          match: alt(capture(Token.VERIFY), capture(Token.THEOREM), capture(Token.LEMMA)),
+          captures: {
+            1: { name: Scope.TERM_LET() },
           },
           patterns: [include(this.bindTerm)],
         },
@@ -2288,6 +2343,7 @@ export class Imandra implements basis.ILanguage {
         termFor: this.termFor(),
         termFunction: this.termFunction(),
         termLet: this.termLet(),
+        termVerifyTheoremLemma: this.termVerifyTheoremLemma(),
         termMatch: this.termMatch(),
         termMatchRule: this.termMatchRule(),
         termOperator: this.termOperator(),

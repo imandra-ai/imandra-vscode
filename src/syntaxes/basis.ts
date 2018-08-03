@@ -131,6 +131,9 @@ export const Token = {
   WHEN: "when",
   WHILE: "while",
   WITH: "with",
+  VERIFY: "verify",
+  THEOREM: "theorem",
+  LEMMA: "lemma",
 };
 
 export class Scope {
@@ -151,6 +154,18 @@ export class Scope {
   }
 
   public static ITEM_LET(): string {
+    return `${this.STYLE_CONTROL()} ${this.STYLE_UNDERLINE()}`;
+  }
+
+  public static ITEM_VERIFY(): string {
+    return `${this.STYLE_CONTROL()} ${this.STYLE_UNDERLINE()}`;
+  }
+
+  public static ITEM_LEMMA(): string {
+    return `${this.STYLE_CONTROL()} ${this.STYLE_UNDERLINE()}`;
+  }
+
+  public static ITEM_THEOREM(): string {
     return `${this.STYLE_CONTROL()} ${this.STYLE_UNDERLINE()}`;
   }
 

@@ -14,5 +14,11 @@
   "search.exclude": {
     "syntaxes": false
   },
-  "typescript.tsdk": "./node_modules/typescript/lib"
+  "typescript.tsdk": "./node_modules/typescript/lib",
+  "reason.path.ocamlmerlin": "/Users/ewenmaclean/.vscode/extensions/aestheticintegration.iml-vscode-1.0.0/ext-script/imandra-merlin",
+  "reason.server.languages": [
+    "ocaml",
+    "reason",
+    "imandra"
+  ]
 }
