@@ -102,8 +102,8 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.languages.setLanguageConfiguration("imandra", imandraConfiguration));
   const configName = "path.ocamlmerlin";
   const langConfigName = "server.languages";
-  const home = process.env.HOME;
-  const execLocation = home + "/.vscode/extensions/aestheticintegration.iml-vscode-1.0.0/ext-script/imandra-merlin";
+
+  const execLocation = context.asAbsolutePath("ext-script/imandra-merlin");
   const config = vscode.workspace.getConfiguration("reason");
 
   if (vscode.workspace.rootPath === undefined) {
