@@ -3,7 +3,7 @@
   "name": "iml-vscode",
   "displayName": "Imandra IDE",
   "description": "Imandra language support",
-  "version": "1.0.0",
+  "version": "0.1.0-release",
   "publisher": "aestheticintegration",
   "license": "SEE LICENSE IN LICENSE.txt",
   "bugs": {
