@@ -5,13 +5,12 @@
   "description": "Imandra language support",
   "version": "0.1.0-release",
   "publisher": "aestheticintegration",
-  "license": "SEE LICENSE IN LICENSE.txt",
   "bugs": {
-    "url": "https://github.com/aestheticintegration/imandra-vscode/issues"
+    "url": "https://github.com/aestheticintegration/iml-vscode/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/aestheticintegration/imandra-vscode.git"
+    "url": "https://github.com/aestheticintegration/iml-vscode.git"
   },
   "engines": {
     "vscode": "^1.21.0"
