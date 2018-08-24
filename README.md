@@ -36,12 +36,15 @@ At present the `imandra` reader extension for merlin provides:
 
 All code actions and commands are inherited from the [OCaml and Reason IDE](https://marketplace.visualstudio.com/items?itemName=freebroccolo.reasonml) extension, but the behaviour of merlin is specific to imandra.
 
-## Disclaimer
+## Warnings and Errors
 
 When you open a workspace with an `imandra` file present you will see warnings appear in the `problems` tab. These warnings do not affect the functionality of the extension and we are working to erradicate them. The two which you will see which currently can safely be disregarded are:
 
 - Array has too many items. Expected {0} or fewer
 - Value is not accepted. Valid values: "ocaml", "reason"
+
+If you get an error saying that the merlin binary cannot be found, and the current workspace settings in `.vscode/settings.json` has an existing value of the environment variable `reason.path.ocamlmerlin` which points to the wrong place, please delete this entry and then use the command `reload window`. We are working on an automatic fix for this problem.
+
 
 ## Work in progress
 

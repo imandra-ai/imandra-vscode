@@ -104,6 +104,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const langConfigName = "server.languages";
 
   const execLocation = context.asAbsolutePath("ext-script/imandra-merlin");
+
   const config = vscode.workspace.getConfiguration("reason");
 
   if (vscode.workspace.rootPath === undefined) {
