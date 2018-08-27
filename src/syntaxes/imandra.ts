@@ -989,10 +989,10 @@ export class Imandra implements basis.ILanguage {
         1: { name: Scope.ITEM_VAL() },
         2: { name: Scope.ITEM_METHOD() },
         3: { name: Scope.ITEM_LET() },
-        4: { name: Scope.STYLE_OPERATOR() },
-        5: { name: Scope.ITEM_VERIFY() },
-        6: { name: Scope.ITEM_THEOREM() },
-        7: { name: Scope.ITEM_LEMMA() },
+        4: { name: Scope.ITEM_LEMMA() },
+        5: { name: Scope.ITEM_THEOREM() },
+        6: { name: Scope.ITEM_VERIFY() },
+        7: { name: Scope.STYLE_OPERATOR() },
       },
       endCaptures: {
         0: { name: Scope.STYLE_DELIMITER() },
@@ -1870,7 +1870,7 @@ export class Imandra implements basis.ILanguage {
     return {
       patterns: [
         {
-          match: alt(capture(Token.VERIFY), capture(Token.THEOREM), capture(Token.LEMMA)),
+          match: alt(capture(Token.LEMMA), capture(Token.THEOREM), capture(Token.VERIFY)),
           captures: {
             1: { name: Scope.TERM_LET() },
           },

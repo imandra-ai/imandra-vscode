@@ -3,7 +3,7 @@
   "name": "iml-vscode",
   "displayName": "Imandra IDE",
   "description": "Imandra language support",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "aestheticintegration",
   "bugs": {
     "url": "https://github.com/aestheticintegration/iml-vscode/issues"
@@ -21,6 +21,10 @@
   "keywords": [
     "imandra"
   ],
+  "galleryBanner": {
+    "color": "#1BABA5",
+    "theme": "dark"
+  },
   "icon": "assets/logo.png",
   "activationEvents": [
     "onLanguage:imandra"

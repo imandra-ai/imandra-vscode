@@ -132,8 +132,8 @@ export const Token = {
   WHILE: "while",
   WITH: "with",
   VERIFY: "verify",
-  THEOREM: "theorem",
   LEMMA: "lemma",
+  THEOREM: "theorem",
 };
 
 export class Scope {
