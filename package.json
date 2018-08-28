@@ -3,7 +3,7 @@
   "name": "iml-vscode",
   "displayName": "Imandra IDE",
   "description": "Imandra language support",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "aestheticintegration",
   "bugs": {
     "url": "https://github.com/aestheticintegration/iml-vscode/issues"
@@ -68,8 +68,6 @@
     "vscode": "1.1.14"
   },
   "dependencies": {
-    "pegjs": "0.10.0",
-    "vscode-jsonrpc": "3.6.0",
     "vscode-languageclient": "4.0.1",
     "vscode-languageserver": "4.0.0",
     "vscode-languageserver-protocol": "3.6.0"

@@ -109,7 +109,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   if (vscode.workspace.rootPath === undefined) {
     vscode.window.showErrorMessage(
-      "The Imandra VSCode extension is only permissable when a local workspace is available - please open this file in a directory.",
+      "The Imandra VSCode extension is only permissible when a local workspace is available - in order to analyse this file, please open the folder containing this file",
     );
   } else {
     const filePath = path.join(vscode.workspace.rootPath, ".vscode/settings.json");
