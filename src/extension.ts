@@ -103,9 +103,8 @@ export async function activate(context: vscode.ExtensionContext) {
   const configName = "path.ocamlmerlin";
   const langConfigName = "server.languages";
 
-  const execLocation = context.asAbsolutePath("ext-script/imandra-merlin");
-
   const config = vscode.workspace.getConfiguration("reason");
+  const imandraMerlinScript = "/usr/local/var/imandra/_opam/bin/imandra-merlin"
 
   if (vscode.workspace.rootPath === undefined) {
     vscode.window.showErrorMessage(
@@ -121,8 +120,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const existingExecLocation = config.get(configName);
 
-    if (existingExecLocation !== execLocation) {
-      config.update(configName, execLocation);
+    if (existingExecLocation !== imandraMerlinScript) {
+      config.update(configName, imandraMerlinScript);
       await vscode.commands.executeCommand("workbench.action.reloadWindow");
     }
   }

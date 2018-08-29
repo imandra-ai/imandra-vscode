@@ -1,3 +1,0 @@
-#!/bin/bash
-
-exec ocamlmerlin $@ -reader imandra -open Imandra_prelude -open Imandra_lib -package imandra.lib -package imandra.prelude -package zarith
