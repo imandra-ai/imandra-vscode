@@ -1,6 +1,6 @@
 // tslint:disable object-literal-sort-keys trailing-comma
 
-import * as basis from "./basis";
+import * as basis from "./imandrabasis";
 import * as schema from "./schema";
 
 const {
@@ -93,6 +93,7 @@ export class Imandra implements basis.ILanguage {
       Token.LET,
       Token.VERIFY,
       Token.LEMMA,
+      Token.AXIOM,
       Token.THEOREM,
       Token.INSTANCE,
       Token.METHOD,
@@ -555,6 +556,7 @@ export class Imandra implements basis.ILanguage {
               Token.METHOD,
               Token.VAL,
               Token.LEMMA,
+              Token.AXIOM,
               Token.VERIFY,
               Token.THEOREM,
               Token.INSTANCE,
@@ -581,6 +583,7 @@ export class Imandra implements basis.ILanguage {
                   Token.EXTERNAL,
                   Token.LET,
                   Token.LEMMA,
+                  Token.AXIOM,
                   Token.VERIFY,
                   Token.THEOREM,
                   Token.METHOD,
@@ -980,6 +983,7 @@ export class Imandra implements basis.ILanguage {
               capture(Token.METHOD),
               capture(Token.LET),
               capture(Token.LEMMA),
+              capture(Token.AXIOM),
               capture(Token.VERIFY),
               capture(Token.THEOREM),
               capture(Token.INSTANCE),
@@ -994,10 +998,11 @@ export class Imandra implements basis.ILanguage {
         2: { name: Scope.ITEM_METHOD() },
         3: { name: Scope.ITEM_LET() },
         4: { name: Scope.ITEM_LEMMA() },
-        5: { name: Scope.ITEM_THEOREM() },
-        6: { name: Scope.ITEM_VERIFY() },
-        7: { name: Scope.ITEM_INSTANCE() },
-        8: { name: Scope.STYLE_OPERATOR() },
+        5: { name: Scope.ITEM_AXIOM() },
+        6: { name: Scope.ITEM_THEOREM() },
+        7: { name: Scope.ITEM_VERIFY() },
+        8: { name: Scope.ITEM_INSTANCE() },
+        9: { name: Scope.STYLE_OPERATOR() },
       },
       endCaptures: {
         0: { name: Scope.STYLE_DELIMITER() },
@@ -1875,7 +1880,13 @@ export class Imandra implements basis.ILanguage {
     return {
       patterns: [
         {
-          match: alt(capture(Token.LEMMA), capture(Token.THEOREM), capture(Token.VERIFY), capture(Token.INSTANCE)),
+          match: alt(
+            capture(Token.LEMMA),
+            capture(Token.AXIOM),
+            capture(Token.THEOREM),
+            capture(Token.VERIFY),
+            capture(Token.INSTANCE),
+          ),
           captures: {
             1: { name: Scope.TERM_LET() },
           },

@@ -13,3 +13,11 @@ Updating `lemma` and `instance` keywords' behaviour and updating error message w
 ## 0.1.3
 
 Updating the location of the `imandra-merlin` script to that which is provided by the imandra installer.
+
+## 0.1.4
+
+Adding imandra-reason language and adding axiom keyword to existing imandra language syntax definition.
+
+## 0.1.5
+
+Minor syntax changes for verify and instance keywords in `imanda-reason`.

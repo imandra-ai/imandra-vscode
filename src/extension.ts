@@ -100,11 +100,13 @@ function ensureDirectoryExistence(filePath: string) {
 
 export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.languages.setLanguageConfiguration("imandra", imandraConfiguration));
+  context.subscriptions.push(vscode.languages.setLanguageConfiguration("imandra-reason", imandraConfiguration));
+
   const configName = "path.ocamlmerlin";
   const langConfigName = "server.languages";
 
   const config = vscode.workspace.getConfiguration("reason");
-  const imandraMerlinScript = "/usr/local/var/imandra/_opam/bin/imandra-merlin"
+  const imandraMerlinScript = "/usr/local/var/imandra/_opam/bin/imandra-merlin";
 
   if (vscode.workspace.rootPath === undefined) {
     vscode.window.showErrorMessage(
@@ -115,12 +117,7 @@ export async function activate(context: vscode.ExtensionContext) {
     ensureDirectoryExistence(filePath);
     if (!fs.existsSync(filePath)) {
       fs.writeFileSync(filePath, "", "utf8");
-    }
-    config.update(langConfigName, ["ocaml", "reason", "imandra"]);
-
-    const existingExecLocation = config.get(configName);
-
-    if (existingExecLocation !== imandraMerlinScript) {
+      config.update(langConfigName, ["ocaml", "reason", "imandra", "imandra-reason"]);
       config.update(configName, imandraMerlinScript);
       await vscode.commands.executeCommand("workbench.action.reloadWindow");
     }

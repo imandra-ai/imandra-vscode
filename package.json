@@ -3,7 +3,7 @@
   "name": "iml-vscode",
   "displayName": "Imandra IDE",
   "description": "Imandra language support",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "publisher": "aestheticintegration",
   "bugs": {
     "url": "https://github.com/aestheticintegration/iml-vscode/issues"
@@ -27,7 +27,8 @@
   },
   "icon": "assets/logo.png",
   "activationEvents": [
-    "onLanguage:imandra"
+    "onLanguage:imandra",
+    "onLanguage:imandra-reason"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -36,6 +37,11 @@
         "language": "imandra",
         "scopeName": "source.imandra",
         "path": "./syntaxes/imandra.json"
+      },
+      {
+        "language": "imandra-reason",
+        "scopeName": "source.imandra-reason",
+        "path": "./syntaxes/imandra-reason.json"
       }
     ],
     "languages": [
@@ -48,6 +54,16 @@
           ".iml"
         ],
         "configuration": "./imandra.configuration.json"
+      },
+      {
+        "id": "imandra-reason",
+        "aliases": [
+          "Imandra Reason"
+        ],
+        "extensions": [
+          ".ire"
+        ],
+        "configuration": "./imandra-reason.configuration.json"
       }
     ]
   },
