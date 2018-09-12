@@ -1,0 +1,11 @@
+{
+  "scopeName": "source.imandra-reason.hover.type",
+  "patterns": [
+    {
+      "include": "source.imandra-reason#module-item-type"
+    },
+    {
+      "include": "source.imandra-reason#type-expression"
+    }
+  ]
+}

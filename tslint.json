@@ -1,16 +1,26 @@
 {
   "extends": "tslint:latest",
   "rules": {
+    "no-console": false,
     "arrow-parens": false,
     "curly": false,
-    "max-classes-per-file": [false],
-    "max-line-length": [false],
+    "max-classes-per-file": [
+      false
+    ],
+    "max-line-length": [
+      false
+    ],
     "no-conditional-assignment": false,
     "no-empty-interface": false,
     "no-implicit-dependencies": false,
     "no-namespace": false,
     "no-shadowed-variable": false,
-    "no-unused-variable": [true, { "ignore-pattern": "^_" }],
+    "no-unused-variable": [
+      true,
+      {
+        "ignore-pattern": "^_"
+      }
+    ],
     "space-before-function-paren": false,
     "variable-name": [
       true,
