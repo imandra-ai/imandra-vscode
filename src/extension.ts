@@ -104,7 +104,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const configName = "path.ocamlmerlin";
   const langConfigName = "server.languages";
-
+  const argsConfigName = "path.ocamlmerlinArgs";
   const config = vscode.workspace.getConfiguration("reason");
   const imandraMerlinScript = "/usr/local/var/imandra/_opam/bin/imandra-merlin";
 
@@ -119,6 +119,17 @@ export async function activate(context: vscode.ExtensionContext) {
       fs.writeFileSync(filePath, "", "utf8");
       config.update(langConfigName, ["ocaml", "reason", "imandra", "imandra-reason"]);
       config.update(configName, imandraMerlinScript);
+      config.update(argsConfigName, [
+        "-assocsuffix .iml:imandra",
+        "-assocsuffix .ire:imandra-reason",
+        "-addsuffix .iml,.imli",
+        "-addsuffix .ire,.irei",
+        "-open Imandra_prelude",
+        "-open Imandra_interactive",
+        "-package imandra-base.interactive",
+        "-package imandra-base.prelude",
+        "-package zarith",
+      ]);
       await vscode.commands.executeCommand("workbench.action.reloadWindow");
     }
   }

@@ -502,4 +502,4 @@ export interface IRender {
   render(): schema.IGrammar;
 }
 
-export interface ILanguage extends IGrammar, IRender { }
+export interface ILanguage extends IGrammar, IRender {}
