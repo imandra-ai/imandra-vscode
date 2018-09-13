@@ -51,7 +51,7 @@ export namespace format {
 export function register(context: vscode.ExtensionContext, languageClient: client.LanguageClient): void {
   // FIXME: using the edit builder passed in to the command doesn't seem to work
   context.subscriptions.push(
-    vscode.commands.registerTextEditorCommand("reason.caseSplit", async (editor): Promise<void> => {
+    vscode.commands.registerTextEditorCommand("imandra.caseSplit", async (editor): Promise<void> => {
       const textDocument = { uri: editor.document.uri.toString() };
       const rangeCode = editor.document.getWordRangeAtPosition(editor.selection.start);
       if (null == rangeCode) return;

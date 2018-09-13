@@ -154,20 +154,29 @@
           "uniqueItems": true,
           "description": "The list of languages enable support for in the language server."
         },
-        "imandra.server.ocamlmerlinArgs": {
+        "imandra.path.ocamlmerlinArgs": {
           "type": "array",
           "default": [
-            "-addsuffix .iml,.imli",
-            "-addsuffix .ire,.irei",
-            "-open Imandra_prelude",
-            "-assocsuffix .iml:imandra",
-            "-assocsuffix .imli:imandra",
-            "-assocsuffix .ire:imandra-reason",
-            "-assocsuffix .irei:imandra-reason",
-            "-package imandra-base.prelude",
-            "-package zarith"
+            "-addsuffix",
+            ".iml,.imli",
+            "-addsuffix",
+            ".ire,.irei",
+            "-open",
+            "Imandra_prelude",
+            "-assocsuffix",
+            ".iml:imandra",
+            "-assocsuffix",
+            ".imli:imandra",
+            "-assocsuffix",
+            ".ire:imandra-reason",
+            "-assocsuffix",
+            ".irei:imandra-reason",
+            "-package",
+            "imandra-base.prelude",
+            "-package",
+            "zarith"
           ],
-          "uniqueItems": true,
+          "uniqueItems": false,
           "description": "Merlin flags and arguments to be passed."
         }
       }
