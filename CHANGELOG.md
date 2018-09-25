@@ -20,4 +20,24 @@ Adding imandra-reason language and adding axiom keyword to existing imandra lang
 
 ## 0.1.5
 
-Minor syntax changes for verify and instance keywords in `imanda-reason`.
+Minor syntax changes for verify and instance keywords in `imandra-reason`.
+
+## 0.1.6
+
+Updating to allow VSCode syncing with local opam switches.
+
+## 0.1.7
+
+Updating README to remove references to standard `ml` and `re` files.
+
+## 0.1.8
+
+Updating underlying merlin server to behave correctly on opam error.
+
+## 0.1.9
+
+Fixing tags and keywords
+
+## 0.2.0
+
+Fixing tags and keywords - adding ocaml

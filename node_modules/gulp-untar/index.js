@@ -1,6 +1,6 @@
 var through = require('through2')
 var parse = require('tar').Parse
-var gutil = require('gulp-util')
+var Vinyl = require('vinyl')
 var path = require('path')
 var streamifier = require('streamifier')
 var es = require('event-stream')
@@ -37,7 +37,7 @@ module.exports = function () {
       entry.pipe(es.wait(function (err, data) {
         if (err) return this.emit('error', err)
 
-        this.push(new gutil.File({
+        this.push(new Vinyl({
           contents: new Buffer(data),
           path: path.normalize(path.dirname(file.path) + '/' + entry.props.path),
           base: file.base,

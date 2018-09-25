@@ -1,6 +1,7 @@
 {
   "extends": "tslint:latest",
   "rules": {
+    "no-console": false,
     "arrow-parens": false,
     "curly": false,
     "max-classes-per-file": [false],
@@ -10,14 +11,13 @@
     "no-implicit-dependencies": false,
     "no-namespace": false,
     "no-shadowed-variable": false,
-    "no-unused-variable": [true, { "ignore-pattern": "^_" }],
-    "space-before-function-paren": false,
-    "variable-name": [
+    "no-unused-variable": [
       true,
-      "ban-keywords",
-      "check-format",
-      "allow-pascal-case",
-      "allow-leading-underscore"
-    ]
+      {
+        "ignore-pattern": "^_"
+      }
+    ],
+    "space-before-function-paren": false,
+    "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case", "allow-leading-underscore"]
   }
 }

@@ -1,0 +1,14 @@
+{
+  "scopeName": "source.imandra.hover.type",
+  "patterns": [
+    {
+      "include": "source.imandra#decl"
+    },
+    {
+      "include": "source.imandra#type"
+    },
+    {
+      "include": "source.imandra#signature"
+    }
+  ]
+}

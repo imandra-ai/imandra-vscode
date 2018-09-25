@@ -1,0 +1,11 @@
+{
+  "scopeName": "source.imandra-reason.hover.signature",
+  "patterns": [
+    {
+      "include": "source.imandra-reason#signature-expression"
+    },
+    {
+      "include": "source.imandra-reason#type-expression"
+    }
+  ]
+}
