@@ -3,7 +3,7 @@
   "name": "iml-vscode",
   "displayName": "Imandra IDE",
   "description": "Imandra language support",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "publisher": "aestheticintegration",
   "bugs": {
     "url": "https://github.com/aestheticintegration/iml-vscode/issues"
@@ -16,7 +16,7 @@
     "vscode": "^1.21.0"
   },
   "categories": ["Formatters", "Programming Languages", "Linters"],
-  "keywords": ["ocaml", "Formal Verification", "Formal Methods", "Artificial Intelligence", "Mathematics"],
+  "keywords": ["ocaml", "Formal Verification", "Formal Methods", "Artificial Intelligence", "reasonml"],
   "galleryBanner": {
     "color": "#1BABA5",
     "theme": "dark"
