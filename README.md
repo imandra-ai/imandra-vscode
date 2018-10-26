@@ -6,7 +6,7 @@ In order to learn more about imandra, please visit the interactive [documentatio
 
 ## System requirements
 
-It is necessary that you have the executables `ocamlmerlin` and `ocamlmerlin-imandra` installed on your system. This can be globally using [opam](https://opam.ocaml.org/) - the OCaml package manager - in which case the switch detected by VSCode will be the same as if using opam from the directory which corresponds to your workspace root. For example - if you open a directory `~/my_imandra_project/` which has a local switch then the switch in which `merlin` and `ocp-indent` is executed will be this local switch. If no local switch exists, then the default global switch will be used.
+It is necessary that you have the executables `ocamlmerlin` and `ocamlmerlin-imandra` installed on your system. All the imandra-specific components required are installed automatically by following the instructions provided [here](https://docs.imandra.ai/imandra-docs-dev/notebooks/installation/).If installed using [opam](https://opam.ocaml.org/) - the OCaml package manager - the switch detected by VSCode will be the same as if using opam from the directory which corresponds to your workspace root. For example - if you open a directory `~/my_imandra_project/` which has a local switch then the switch in which `merlin` and `ocp-indent` is executed will be this local switch. If no local switch exists, then the default global switch will be used.
 
 Alternatively you can use systems such as [esy](https://esy.sh/) with which you can configure the installation of executables such as `merlin` and `ocp-indent`.
 

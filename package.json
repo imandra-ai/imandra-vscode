@@ -2,7 +2,7 @@
   "private": true,
   "name": "iml-vscode",
   "displayName": "Imandra IDE",
-  "description": "Imandra language support",
+  "description": "Imandra (ReasonML/OCaml) reasoning studio",
   "version": "0.2.2",
   "publisher": "aestheticintegration",
   "bugs": {
