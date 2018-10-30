@@ -31,9 +31,9 @@ At present the `imandra` and `imandra-reason` reader extensions for merlin provi
 * type information of the underlying `imandra` types
 * general syntax completions
 
-![](https://storage.googleapis.com/imandra-assets/images/github/VS_code_documentation_gif/testImandraHover1.gif)
+![](https://storage.googleapis.com/imandra-assets/images/github/VS_code_documentation_gif/animGifVSCode1.gif)
 
-![](https://storage.googleapis.com/imandra-assets/images/github/VS_code_documentation_gif/testImandraCompletion.gif)
+![](https://storage.googleapis.com/imandra-assets/images/github/VS_code_documentation_gif/animGifVSCode2.gif)
 
 ### Inherited functionality
 
