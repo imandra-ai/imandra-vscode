@@ -15,27 +15,14 @@
   "engines": {
     "vscode": "^1.21.0"
   },
-  "categories": [
-    "Formatters",
-    "Programming Languages",
-    "Linters"
-  ],
-  "keywords": [
-    "ocaml",
-    "Formal Verification",
-    "Formal Methods",
-    "Artificial Intelligence",
-    "reasonml"
-  ],
+  "categories": ["Formatters", "Programming Languages", "Linters"],
+  "keywords": ["ocaml", "Formal Verification", "Formal Methods", "Artificial Intelligence", "reasonml"],
   "galleryBanner": {
     "color": "#1BABA5",
     "theme": "dark"
   },
   "icon": "assets/logo.png",
-  "activationEvents": [
-    "onLanguage:imandra",
-    "onLanguage:imandra-reason"
-  ],
+  "activationEvents": ["onLanguage:imandra", "onLanguage:imandra-reason"],
   "main": "./out/src/extension",
   "contributes": {
     "configuration": {
@@ -58,34 +45,26 @@
               "type": "integer"
             },
             {
-              "enum": [
-                "Infinity"
-              ]
+              "enum": ["Infinity"]
             }
           ],
           "default": 500,
-          "description": "How long to idle (in milliseconds) after keypresses before refreshing linter diagnostics. Smaller values refresh diagnostics more quickly."
+          "description":
+            "How long to idle (in milliseconds) after keypresses before refreshing linter diagnostics. Smaller values refresh diagnostics more quickly."
         },
         "imandra.diagnostics.tools": {
           "type": "array",
           "items": {
-            "enum": [
-              "merlin",
-              "bsb"
-            ]
+            "enum": ["merlin", "bsb"]
           },
-          "default": [
-            "merlin"
-          ],
+          "default": ["merlin"],
           "maxItems": 2,
           "uniqueItems": true,
-          "description": "Specifies which tool or tools will be used to get diagnostics. If you choose both \"merlin\" and \"bsb\", merlin will be used while editing and bsb when saving."
+          "description":
+            "Specifies which tool or tools will be used to get diagnostics. If you choose both \"merlin\" and \"bsb\", merlin will be used while editing and bsb when saving."
         },
         "imandra.format.width": {
-          "type": [
-            "number",
-            null
-          ],
+          "type": ["number", null],
           "default": null,
           "description": "Set the width of lines when formatting code with refmt"
         },
@@ -107,7 +86,8 @@
         "imandra.path.env": {
           "type": "string",
           "default": "env",
-          "description": "The path to the `env` command which prints the language server environment for debugging editor issues."
+          "description":
+            "The path to the `env` command which prints the language server environment for debugging editor issues."
         },
         "imandra.path.ocamlmerlin": {
           "type": "string",
@@ -147,15 +127,9 @@
         "imandra.server.languages": {
           "type": "array",
           "items": {
-            "enum": [
-              "imandra",
-              "imandra-reason"
-            ]
+            "enum": ["imandra", "imandra-reason"]
           },
-          "default": [
-            "imandra",
-            "imandra-reason"
-          ],
+          "default": ["imandra", "imandra-reason"],
           "maxItems": 2,
           "uniqueItems": true,
           "description": "The list of languages enable support for in the language server."
@@ -227,22 +201,14 @@
     "languages": [
       {
         "id": "imandra",
-        "aliases": [
-          "Imandra"
-        ],
-        "extensions": [
-          ".iml"
-        ],
+        "aliases": ["Imandra"],
+        "extensions": [".iml"],
         "configuration": "./imandra.configuration.json"
       },
       {
         "id": "imandra-reason",
-        "aliases": [
-          "Imandra Reason"
-        ],
-        "extensions": [
-          ".ire"
-        ],
+        "aliases": ["Imandra Reason"],
+        "extensions": [".ire"],
         "configuration": "./imandra-reason.configuration.json"
       },
       {
@@ -280,8 +246,8 @@
     "vscode": "^1.1.21"
   },
   "dependencies": {
+    "imandra-language-server": "github:AestheticIntegration/imandra-language-server",
     "lodash.flatmap": "^4.5.0",
-    "imandra-language-server": "AestheticIntegration/imandra-language-server",
     "pegjs": "0.10.0",
     "vscode-jsonrpc": "3.6.0",
     "vscode-languageclient": "4.0.1",

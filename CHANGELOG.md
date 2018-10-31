@@ -1,6 +1,7 @@
 ## 0.2.3
 
 Updating merlin to use public extracted imandra-prelude.
+Fixing null error code return in `imandra-language-server`.
 
 ## 0.2.2
 
