@@ -1,3 +1,7 @@
+## 0.2.3
+
+Updating merlin to use public extracted imandra-prelude.
+
 ## 0.2.2
 
 Updating imandra installation instructions.
