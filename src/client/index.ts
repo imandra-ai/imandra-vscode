@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import * as client from "vscode-languageclient";
 import * as command from "./command";
 import * as request from "./request";
+import { RegistrationRequest } from "vscode-languageclient";
 
 class ClientWindow implements vscode.Disposable {
   public readonly merlin: vscode.StatusBarItem;
@@ -26,6 +27,8 @@ class ErrorHandler {
     return client.ErrorAction.Shutdown;
   }
 }
+
+let cur_client: client.LanguageClient | undefined = undefined;
 
 export async function launch(context: vscode.ExtensionContext): Promise<void> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
@@ -65,11 +68,23 @@ export async function launch(context: vscode.ExtensionContext): Promise<void> {
   const languageClient = new client.LanguageClient("Imandra", serverOptions, clientOptions);
   const window = new ClientWindow();
   const session = languageClient.start();
+  cur_client = languageClient; // so we can restart it
   context.subscriptions.push(window);
   context.subscriptions.push(session);
+  context.subscriptions.push(vscode.commands.registerCommand('imandra.reload', () => {
+    restart(context);
+  }))
   await languageClient.onReady();
   command.registerAll(context, languageClient);
   request.registerAll(context, languageClient);
   window.merlin.text = "$(hubot) [merlin]";
   window.merlin.tooltip = "merlin server online";
+}
+
+export async function restart(context: vscode.ExtensionContext): Promise<void> {
+  if (cur_client != undefined) {
+    await cur_client.stop();
+    cur_client = undefined;
+  }
+  return await launch(context);
 }
