@@ -1,4 +1,3 @@
-import flatMap = require("lodash.flatmap");
 import * as path from "path";
 import * as vscode from "vscode";
 import * as client from "vscode-languageclient";
@@ -41,11 +40,11 @@ export async function launch(context: vscode.ExtensionContext): Promise<void> {
   };
   const serverOptions = { run, debug };
   const languages = imandraConfig.get<string[]>("server.languages", ["imandra", "imandra-reason"]);
-  const documentSelector = flatMap(languages, (language: string) => [
-    { language, scheme: "file" },
-    { language, scheme: "untitled" },
-  ]);
-
+  const documentSelector = new Array();
+  for (const language of languages) {
+    documentSelector.push({ language, scheme: "file" });
+    documentSelector.push({ language, scheme: "untitled" });
+  };
   const clientOptions: client.LanguageClientOptions = {
     diagnosticCollectionName: "imandra-language-server",
     documentSelector,
