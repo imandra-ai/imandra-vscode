@@ -1,9 +1,9 @@
-import flatMap = require("lodash.flatmap");
 import * as path from "path";
 import * as vscode from "vscode";
 import * as client from "vscode-languageclient";
 import * as command from "./command";
 import * as request from "./request";
+// import { RegistrationRequest } from "vscode-languageclient";
 
 class ClientWindow implements vscode.Disposable {
   public readonly merlin: vscode.StatusBarItem;
@@ -28,6 +28,8 @@ class ErrorHandler {
   }
 }
 
+let curClient: client.LanguageClient | undefined;
+
 export async function launch(context: vscode.ExtensionContext): Promise<void> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
   const module = context.asAbsolutePath(path.join("node_modules", "imandra-language-server", "bin", "server"));
@@ -41,11 +43,11 @@ export async function launch(context: vscode.ExtensionContext): Promise<void> {
   };
   const serverOptions = { run, debug };
   const languages = imandraConfig.get<string[]>("server.languages", ["imandra", "imandra-reason"]);
-  const documentSelector = flatMap(languages, (language: string) => [
-    { language, scheme: "file" },
-    { language, scheme: "untitled" },
-  ]);
-
+  const documentSelector = new Array();
+  for (const language of languages) {
+    documentSelector.push({ language, scheme: "file" });
+    documentSelector.push({ language, scheme: "untitled" });
+  }
   const clientOptions: client.LanguageClientOptions = {
     diagnosticCollectionName: "imandra-language-server",
     documentSelector,
@@ -66,11 +68,25 @@ export async function launch(context: vscode.ExtensionContext): Promise<void> {
   const languageClient = new client.LanguageClient("Imandra", serverOptions, clientOptions);
   const window = new ClientWindow();
   const session = languageClient.start();
+  curClient = languageClient; // so we can restart it
   context.subscriptions.push(window);
   context.subscriptions.push(session);
+  const reloadCmd = vscode.commands.registerCommand("imandra.reload", () => {
+    console.log("imandra.reload called");
+    restart(context);
+  });
+  context.subscriptions.push(reloadCmd);
   await languageClient.onReady();
   command.registerAll(context, languageClient);
   request.registerAll(context, languageClient);
   window.merlin.text = "$(hubot) [merlin]";
   window.merlin.tooltip = "merlin server online";
+}
+
+export async function restart(context: vscode.ExtensionContext): Promise<void> {
+  if (curClient !== undefined) {
+    await curClient.stop();
+    curClient = undefined;
+  }
+  return launch(context);
 }
