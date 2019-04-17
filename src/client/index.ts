@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import * as client from "vscode-languageclient";
 import * as command from "./command";
 import * as request from "./request";
-import { RegistrationRequest } from "vscode-languageclient";
+// import { RegistrationRequest } from "vscode-languageclient";
 
 class ClientWindow implements vscode.Disposable {
   public readonly merlin: vscode.StatusBarItem;
@@ -28,7 +28,7 @@ class ErrorHandler {
   }
 }
 
-let cur_client: client.LanguageClient | undefined = undefined;
+let curClient: client.LanguageClient | undefined;
 
 export async function launch(context: vscode.ExtensionContext): Promise<void> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
@@ -47,7 +47,7 @@ export async function launch(context: vscode.ExtensionContext): Promise<void> {
   for (const language of languages) {
     documentSelector.push({ language, scheme: "file" });
     documentSelector.push({ language, scheme: "untitled" });
-  };
+  }
   const clientOptions: client.LanguageClientOptions = {
     diagnosticCollectionName: "imandra-language-server",
     documentSelector,
@@ -68,12 +68,14 @@ export async function launch(context: vscode.ExtensionContext): Promise<void> {
   const languageClient = new client.LanguageClient("Imandra", serverOptions, clientOptions);
   const window = new ClientWindow();
   const session = languageClient.start();
-  cur_client = languageClient; // so we can restart it
+  curClient = languageClient; // so we can restart it
   context.subscriptions.push(window);
   context.subscriptions.push(session);
-  context.subscriptions.push(vscode.commands.registerCommand('imandra.reload', () => {
+  const reloadCmd = vscode.commands.registerCommand("imandra.reload", () => {
+    console.log("imandra.reload called");
     restart(context);
-  }))
+  });
+  context.subscriptions.push(reloadCmd);
   await languageClient.onReady();
   command.registerAll(context, languageClient);
   request.registerAll(context, languageClient);
@@ -82,9 +84,9 @@ export async function launch(context: vscode.ExtensionContext): Promise<void> {
 }
 
 export async function restart(context: vscode.ExtensionContext): Promise<void> {
-  if (cur_client != undefined) {
-    await cur_client.stop();
-    cur_client = undefined;
+  if (curClient !== undefined) {
+    await curClient.stop();
+    curClient = undefined;
   }
-  return await launch(context);
+  return launch(context);
 }
