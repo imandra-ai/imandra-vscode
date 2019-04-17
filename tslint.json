@@ -1,16 +1,19 @@
 {
   "extends": "tslint:latest",
   "rules": {
+    "no-empty": false,
+    "ordered-imports": false,
     "no-console": false,
     "arrow-parens": false,
     "curly": false,
-    "max-classes-per-file": [false],
-    "max-line-length": [false],
+    "max-classes-per-file": false,
+    "max-line-length": false,
     "no-conditional-assignment": false,
     "no-empty-interface": false,
     "no-implicit-dependencies": false,
     "no-namespace": false,
     "no-shadowed-variable": false,
+    "no-empty-block": false,
     "no-unused-variable": [
       true,
       {
@@ -18,6 +21,12 @@
       }
     ],
     "space-before-function-paren": false,
-    "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case", "allow-leading-underscore"]
+    "variable-name": [
+      true,
+      "ban-keywords",
+      "check-format",
+      "allow-pascal-case",
+      "allow-leading-underscore"
+    ]
   }
 }
