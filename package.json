@@ -260,6 +260,12 @@
       {
         "id": "imandra-reason.hover.info"
       }
+    ],
+    "commands": [
+      {
+        "command": "imandra.reload",
+        "title": "Imandra: reload plugin"
+      }
     ]
   },
   "scripts": {
