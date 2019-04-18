@@ -3,6 +3,7 @@
   "rules": {
     "no-empty": false,
     "ordered-imports": false,
+    "comment-format": false,
     "no-console": false,
     "arrow-parens": false,
     "curly": false,
