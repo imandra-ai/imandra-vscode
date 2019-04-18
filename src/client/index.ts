@@ -30,7 +30,7 @@ class ErrorHandler {
 
 let curClient: client.LanguageClient | undefined;
 
-export async function launch(context: vscode.ExtensionContext): Promise<void> {
+export async function launch(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
   const module = context.asAbsolutePath(path.join("node_modules", "imandra-language-server", "bin", "server"));
   const options = { execArgv: ["--nolazy", "--inspect=6009"] };
@@ -81,9 +81,14 @@ export async function launch(context: vscode.ExtensionContext): Promise<void> {
   request.registerAll(context, languageClient);
   window.merlin.text = "$(hubot) [merlin]";
   window.merlin.tooltip = "merlin server online";
+  return {
+    dispose() {
+      if (curClient) curClient.stop();
+    },
+  };
 }
 
-export async function restart(context: vscode.ExtensionContext): Promise<void> {
+export async function restart(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
   if (curClient !== undefined) {
     await curClient.stop();
     curClient = undefined;
