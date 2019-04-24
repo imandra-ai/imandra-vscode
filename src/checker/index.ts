@@ -25,6 +25,7 @@ export interface IRange {
 function PosToIPos(p: vscode.Position): IPosition {
   return { line: p.line, char: p.character };
 }
+
 export function RangeToIRange(r: vscode.Range): IRange {
   return { start: PosToIPos(r.start), end: PosToIPos(r.end) };
 }
@@ -32,6 +33,7 @@ export function RangeToIRange(r: vscode.Range): IRange {
 function IPosToPos(p: IPosition): vscode.Position {
   return new vscode.Position(p.line, p.char);
 }
+
 function IRangeToRange(r: IRange): vscode.Range {
   return new vscode.Range(IPosToPos(r.start), IPosToPos(r.end));
 }
@@ -49,7 +51,7 @@ function listenPromise(server: net.Server): Promise<void> {
 }
 
 function isDocIml(d: vscode.TextDocument): boolean {
-  return d.fileName.includes(".iml"); // TODO: improve on that!
+  return d.languageId === "imandra" || d.fileName.includes(".iml"); // TODO: improve on that!
 }
 
 // messages to imandra
@@ -122,17 +124,27 @@ namespace response {
  */
 class DocState implements vscode.Disposable {
   private curDiags: vscode.Diagnostic[] = [];
+  private curDecorations: vscode.DecorationOptions[] = [];
   private doc: vscode.TextDocument;
-  private diagsColl: vscode.DiagnosticCollection;
-  constructor(d: vscode.TextDocument, diags: vscode.DiagnosticCollection) {
+  private server: ImandraServer;
+  private editor?: vscode.TextEditor;
+  constructor(d: vscode.TextDocument, server: ImandraServer) {
     this.doc = d;
-    this.diagsColl = diags;
+    this.server = server;
   }
   public uri(): vscode.Uri {
     return this.doc.uri;
   }
   public uriStr(): string {
     return this.doc.uri.fsPath;
+  }
+  public setEditor(ed: vscode.TextEditor) {
+    assert(this.doc === ed.document);
+    this.editor = ed;
+  }
+  public resetEditor() {
+    if (this.editor) this.editor.setDecorations(this.server.decoration, []);
+    this.editor = undefined;
   }
   public version(): number {
     return this.doc.version;
@@ -147,18 +159,34 @@ class DocState implements vscode.Disposable {
     if (version === this.version()) {
       this.curDiags.push(d);
       // update the diagnostic collection
-      this.diagsColl.set(this.uri(), this.curDiags);
+      this.server.diagnostics.set(this.uri(), this.curDiags);
+    }
+  }
+  public addDecoration(version: number, d: vscode.DecorationOptions) {
+    if (version === this.version()) {
+      this.curDecorations.push(d);
+      this.updateDecorations();
+    }
+  }
+  public updateDecorations() {
+    if (this.editor) this.editor.setDecorations(this.server.decoration, this.curDecorations);
+  }
+  private cleanAll() {
+    // clear diagnostics and decorations
+    this.curDiags.length = 0;
+    this.server.diagnostics.delete(this.uri());
+    this.curDecorations.length = 0;
+    if (this.editor) {
+      this.editor.setDecorations(this.server.decoration, []);
     }
   }
   public updateDoc(d: vscode.TextDocument) {
     assert(d.uri.fsPath.toString() === this.uriStr() && d.version >= this.version()); // same doc
     this.doc = d;
-    // clear diagnostics
-    this.curDiags.length = 0;
-    this.diagsColl.delete(this.uri());
+    this.cleanAll();
   }
   public dispose() {
-    this.diagsColl.delete(this.uri()); // clear diagnostics for this document
+    this.cleanAll();
   }
 }
 
@@ -174,10 +202,10 @@ export class ImandraServer implements vscode.Disposable {
   private server: net.Server; // listen for a connection from imandra
   private docs: Map<string, DocState> = new Map(); // set of active docs, by their uri string
   private subscriptions: vscode.Disposable[] = [];
-  private diagnostics: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection("imandra");
   private pingEpoch: number = 0;
   private lastPongEpoch: number = 0;
-  private decoOk = vscode.window.createTextEditorDecorationType({ backgroundColor: "lightgreen" });
+  public diagnostics: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection("imandra");
+  public decoration: vscode.TextEditorDecorationType;
   // TODO: use it (textEditor.setDecorations) instead of diagnostics, for ok results
 
   // setup connection to imandra-vscode-server
@@ -226,6 +254,15 @@ export class ImandraServer implements vscode.Disposable {
     if (debug === undefined) debug = true; // TODO: make it false by default
     this.debug = debug;
     this.server = net.createServer();
+    const decoStyle: vscode.DecorationRenderOptions = {
+      //backgroundColor: new vscode.ThemeColor("editor.wordHighlightBackground"),
+      overviewRulerColor: "green",
+      gutterIconPath: vscode.Uri.parse("https://cultofthepartyparrot.com/parrots/hd/parrotmustache.gif"),
+      gutterIconSize: "100%",
+      // "https://www.fileformat.info/info/unicode/char/22a2/right_tack.png",
+      outlineColor: "lightgreen",
+    };
+    this.decoration = vscode.window.createTextEditorDecorationType(decoStyle);
   }
 
   public dispose() {
@@ -263,7 +300,7 @@ export class ImandraServer implements vscode.Disposable {
     const key = d.uri.fsPath.toString();
     const isNew = !this.docs.has(key);
     // insert a new docstate
-    this.docs.set(key, new DocState(d, this.diagnostics));
+    this.docs.set(key, new DocState(d, this));
     assert(isNew);
     await this.sendMsg({
       kind: "doc_add",
@@ -301,6 +338,18 @@ export class ImandraServer implements vscode.Disposable {
     });
   }
 
+  private async changeVisibleEditors(eds: vscode.TextEditor[]) {
+    this.docs.forEach((d, _) => d.resetEditor()); // clear
+    for (const ed of eds) {
+      const key = ed.document.uri.fsPath.toString();
+      const d = this.docs.get(key);
+      if (d) {
+        d.setEditor(ed);
+        d.updateDecorations();
+      }
+    }
+  }
+
   // handle messages from imandra-vscode
   private handleRes(res: response.Res) {
     switch (res.kind) {
@@ -309,10 +358,11 @@ export class ImandraServer implements vscode.Disposable {
         const d = this.docs.get(res.uri);
         if (d) {
           const r = IRangeToRange(res.range);
-          const sev = vscode.DiagnosticSeverity.Information;
-          const diag = new vscode.Diagnostic(r, res.msg, sev);
-          //diag.source = "imandra";
-          d.addDiagnostic(res.version, diag);
+          const deco = {
+            range: r,
+            hoverMessage: "```\n" + res.msg + "\n```",
+          };
+          d.addDecoration(res.version, deco);
         }
         return;
       }
@@ -355,7 +405,7 @@ export class ImandraServer implements vscode.Disposable {
   public async init() {
     // listen on random port
     console.log("connecting to imandra-vscode-server...");
-    // TODO: use `opam exec imandra-vscode-server` instead
+    // TODO: use `opam exec -- imandra-vscode-server` instead
     await listenPromise(this.server);
     const port = this.server.address().port;
     const args = [...(this.debug ? ["-d", "4"] : []), "--host", "127.0.0.1", "--port", port.toString()];
@@ -380,6 +430,8 @@ export class ImandraServer implements vscode.Disposable {
       vscode.workspace.onDidOpenTextDocument(this.addDoc, this, this.subscriptions);
       vscode.workspace.onDidCloseTextDocument(this.removeDoc, this, this.subscriptions);
       vscode.workspace.onDidChangeTextDocument(this.changeDoc, this, this.subscriptions);
+      await this.changeVisibleEditors(vscode.window.visibleTextEditors);
+      vscode.window.onDidChangeVisibleTextEditors(this.changeVisibleEditors, this, this.subscriptions);
     }
   }
 }
@@ -388,7 +440,7 @@ export async function launch(_ctx: vscode.ExtensionContext): Promise<vscode.Disp
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
   const clientPath = imandraConfig.get<string>("path.imandra-vscode-server", "imandra-vscode-server");
   const debug = imandraConfig.get<boolean>("debug-vscode-server", false);
-  const server = new ImandraServer(true || debug); // TODO: remove
+  const server = new ImandraServer(debug);
   server.serverPath = clientPath;
   await server.init();
   return Promise.resolve(server);
