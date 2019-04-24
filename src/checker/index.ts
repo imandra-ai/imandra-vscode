@@ -137,6 +137,9 @@ class DocState implements vscode.Disposable {
   public version(): number {
     return this.doc.version;
   }
+  public document(): vscode.TextDocument {
+    return this.doc;
+  }
   public getText(): string {
     return this.doc.getText();
   }
@@ -163,6 +166,8 @@ const PING_FREQ = 20 * 1000; // in ms
 const MAX_EPOCH_MISSED = 3; // maximum number of missed "ping" we accept before concluding the server is dead
 
 export class ImandraServer implements vscode.Disposable {
+  public serverPath: string = "imandra-vscode-server";
+  private debug: boolean;
   private st: state = state.Start;
   private subprocConn: undefined | net.Socket;
   private subproc: undefined | proc.ChildProcess; // connection to imandra server
@@ -172,6 +177,8 @@ export class ImandraServer implements vscode.Disposable {
   private diagnostics: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection("imandra");
   private pingEpoch: number = 0;
   private lastPongEpoch: number = 0;
+  private decoOk = vscode.window.createTextEditorDecorationType({ backgroundColor: "lightgreen" });
+  // TODO: use it (textEditor.setDecorations) instead of diagnostics, for ok results
 
   // setup connection to imandra-vscode-server
   private setupConn(subproc: proc.ChildProcess, sock: net.Socket) {
@@ -193,7 +200,7 @@ export class ImandraServer implements vscode.Disposable {
       subproc.kill();
     });
     sock.on("data", j => {
-      console.log(`got message from imandra: ${j}`);
+      if (this.debug) console.log(`got message from imandra: ${j}`);
       const res = JSON.parse(j.toString()) as response.Res;
       this.handleRes(res);
     });
@@ -215,7 +222,9 @@ export class ImandraServer implements vscode.Disposable {
     );
   }
 
-  public constructor() {
+  public constructor(debug?: undefined | boolean) {
+    if (debug === undefined) debug = true; // TODO: make it false by default
+    this.debug = debug;
     this.server = net.createServer();
   }
 
@@ -302,7 +311,7 @@ export class ImandraServer implements vscode.Disposable {
           const r = IRangeToRange(res.range);
           const sev = vscode.DiagnosticSeverity.Information;
           const diag = new vscode.Diagnostic(r, res.msg, sev);
-          diag.source = "imandra";
+          //diag.source = "imandra";
           d.addDiagnostic(res.version, diag);
         }
         return;
@@ -349,14 +358,16 @@ export class ImandraServer implements vscode.Disposable {
     // TODO: use `opam exec imandra-vscode-server` instead
     await listenPromise(this.server);
     const port = this.server.address().port;
-    const args = ["-d", "4", "--host", "127.0.0.1", "--port", port.toString()];
+    const args = [...(this.debug ? ["-d", "4"] : []), "--host", "127.0.0.1", "--port", port.toString()];
     //console.log("call imandra-vscode-server with args ", args);
     const sockP = waitForConnectionPromise(this.server);
-    const subproc = proc.spawn("imandra-vscode-server", args, { stdio: "inherit" });
+    const subproc = proc.spawn(this.serverPath, args, { stdio: ["ignore", "pipe", "pipe"] });
     if (!subproc.pid) {
       this.dispose();
       return;
     }
+    subproc.stderr.on("data", msg => console.log(`imandra.stderr: ${msg}`));
+    subproc.stdout.on("data", msg => console.log(`imandra.stdout: ${msg}`));
     console.log(`waiting for connection (pid: ${subproc.pid})...`);
     const sock = await sockP;
     console.log("got connection!");
@@ -374,7 +385,11 @@ export class ImandraServer implements vscode.Disposable {
 }
 
 export async function launch(_ctx: vscode.ExtensionContext): Promise<vscode.Disposable> {
-  const server = new ImandraServer();
+  const imandraConfig = vscode.workspace.getConfiguration("imandra");
+  const clientPath = imandraConfig.get<string>("path.imandra-vscode-server", "imandra-vscode-server");
+  const debug = imandraConfig.get<boolean>("debug-vscode-server", false);
+  const server = new ImandraServer(true || debug); // TODO: remove
+  server.serverPath = clientPath;
   await server.init();
   return Promise.resolve(server);
 }

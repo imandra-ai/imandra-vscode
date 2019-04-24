@@ -114,6 +114,16 @@
           "default": "ocamlmerlin",
           "description": "The path to the `ocamlmerlin` binary."
         },
+        "imandra.path.imandra-vscode-server": {
+          "type": "string",
+          "default": "imandra-vscode-server",
+          "description": "The path to the `imandra-vscode-server` binary."
+        },
+        "imandra.debug.imandra-vscode-server": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug messages for imandra-vscode-server"
+        },
         "imandra.path.ocpindent": {
           "type": "string",
           "default": "ocp-indent",
