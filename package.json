@@ -278,8 +278,12 @@
     ],
     "commands": [
       {
-        "command": "imandra.reload",
-        "title": "Imandra: reload plugin"
+        "command": "imandra.merlin.reload",
+        "title": "Imandra: reload Merlin plugin"
+      },
+      {
+        "command": "imandra.server.reload",
+        "title": "Imandra: reload semantic server"
       }
     ]
   },

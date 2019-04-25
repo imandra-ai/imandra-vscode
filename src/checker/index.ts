@@ -295,6 +295,7 @@ export class ImandraServerConn implements vscode.Disposable {
     this.diagnostics.clear();
     // idempotent disposal
     if (this.st !== state.Disposed) {
+      console.log("disconnecting imandra-vscode-server…");
       this.st = state.Disposed;
       try {
         if (this.subproc) this.subproc.kill();
@@ -481,16 +482,29 @@ export class ImandraServer implements vscode.Disposable {
   private nRestarts = 0;
   private lastSuccessfulStart = Date.now();
   private status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+  private subscriptions: vscode.Disposable[] = [];
 
   private setStatus(ok: boolean) {
     if (ok) {
       this.status.text = "[imandra-server: active ✔]";
       this.status.tooltip = "Connection to imandra-vscode-server established";
+      this.status.command = "imandra.server.reload";
     } else {
       this.status.text = "[imandra-server: dead ×]";
       this.status.tooltip = `Lost connection to imandra-vscode-server (${this.nRestarts} restarts)`;
     }
     this.status.show();
+  }
+
+  // restart connection
+  private restart() {
+    if (this.conn) {
+      this.conn.dispose();
+      this.conn = undefined;
+    }
+    this.nRestarts = 0;
+    this.setStatus(false);
+    this.setupConn();
   }
 
   private setupConn() {
@@ -528,6 +542,12 @@ export class ImandraServer implements vscode.Disposable {
 
   public init() {
     console.log("init imandra server...");
+    this.subscriptions.push(
+      vscode.commands.registerCommand("imandra.server.reload", () => {
+        console.log("imandra.server.reload called");
+        this.restart();
+      }),
+    );
     this.setupConn();
   }
 
@@ -538,6 +558,8 @@ export class ImandraServer implements vscode.Disposable {
 
   public dispose() {
     this.status.dispose();
+    this.subscriptions.forEach(d => d.dispose());
+    this.subscriptions.length = 0;
     if (this.conn) {
       this.conn.dispose();
       this.conn = undefined;

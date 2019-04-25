@@ -71,8 +71,8 @@ export async function launch(context: vscode.ExtensionContext): Promise<vscode.D
   curClient = languageClient; // so we can restart it
   context.subscriptions.push(window);
   context.subscriptions.push(session);
-  const reloadCmd = vscode.commands.registerCommand("imandra.reload", () => {
-    console.log("imandra.reload called");
+  const reloadCmd = vscode.commands.registerCommand("imandra.merlin.reload", () => {
+    console.log("imandra.merlin.reload called");
     restart(context);
   });
   context.subscriptions.push(reloadCmd);
