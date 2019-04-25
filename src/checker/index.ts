@@ -126,9 +126,9 @@ class DocState implements vscode.Disposable {
   private curDiags: vscode.Diagnostic[] = [];
   private curDecorations: vscode.DecorationOptions[] = [];
   private doc: vscode.TextDocument;
-  private server: ImandraServer;
+  private server: ImandraServerConn;
   private editor?: vscode.TextEditor;
-  constructor(d: vscode.TextDocument, server: ImandraServer) {
+  constructor(d: vscode.TextDocument, server: ImandraServerConn) {
     this.doc = d;
     this.server = server;
   }
@@ -140,10 +140,13 @@ class DocState implements vscode.Disposable {
   }
   public setEditor(ed: vscode.TextEditor) {
     assert(this.doc === ed.document);
+    if (this.editor) this.editor.setDecorations(this.server.decoration, []);
     this.editor = ed;
   }
   public resetEditor() {
-    if (this.editor) this.editor.setDecorations(this.server.decoration, []);
+    if (this.editor) {
+      this.editor.setDecorations(this.server.decoration, []);
+    }
     this.editor = undefined;
   }
   public version(): number {
@@ -193,9 +196,22 @@ class DocState implements vscode.Disposable {
 const PING_FREQ = 20 * 1000; // in ms
 const MAX_EPOCH_MISSED = 3; // maximum number of missed "ping" we accept before concluding the server is dead
 
-export class ImandraServer implements vscode.Disposable {
-  public serverPath: string = "imandra-vscode-server";
-  private debug: boolean;
+export interface ImandraServerConfig {
+  debug: boolean;
+  serverPath: string;
+}
+
+export const defaultImandraServerConfig: ImandraServerConfig = {
+  serverPath: "imandra-vscode-server",
+  debug: false,
+};
+
+/**
+ * A connection to imandra-vscode-server, as well as the current
+ * set of active documents/editors
+ */
+export class ImandraServerConn implements vscode.Disposable {
+  private config: ImandraServerConfig;
   private st: state = state.Start;
   private subprocConn: undefined | net.Socket;
   private subproc: undefined | proc.ChildProcess; // connection to imandra server
@@ -206,7 +222,11 @@ export class ImandraServer implements vscode.Disposable {
   private lastPongEpoch: number = 0;
   public diagnostics: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection("imandra");
   public decoration: vscode.TextEditorDecorationType;
-  // TODO: use it (textEditor.setDecorations) instead of diagnostics, for ok results
+  private procDie: vscode.EventEmitter<void> = new vscode.EventEmitter();
+
+  private get debug(): boolean {
+    return this.config.debug;
+  }
 
   // setup connection to imandra-vscode-server
   private setupConn(subproc: proc.ChildProcess, sock: net.Socket) {
@@ -220,12 +240,11 @@ export class ImandraServer implements vscode.Disposable {
     }
     this.subproc.on("close", (code, signal) => {
       console.log(`imandra-vscode closed with code=${code}, signal=${signal}`);
-      this.st = state.Disposed;
+      this.dispose();
     });
     this.subproc.on("exit", code => {
       console.log(`imandra-vscode exited with ${code}`);
-      this.st = state.Disposed;
-      subproc.kill();
+      this.dispose();
     });
     sock.on("data", j => {
       if (this.debug) console.log(`got message from imandra: ${j}`);
@@ -250,17 +269,21 @@ export class ImandraServer implements vscode.Disposable {
     );
   }
 
-  public constructor(debug?: undefined | boolean) {
-    if (debug === undefined) debug = true; // TODO: make it false by default
-    this.debug = debug;
+  /// Triggered when the subprocess died
+  public get onProcDied(): vscode.Event<void> {
+    return this.procDie.event;
+  }
+
+  public constructor(config: ImandraServerConfig) {
+    this.config = config;
     this.server = net.createServer();
     const decoStyle: vscode.DecorationRenderOptions = {
       //backgroundColor: new vscode.ThemeColor("editor.wordHighlightBackground"),
       overviewRulerColor: "green",
-      gutterIconPath: vscode.Uri.parse("https://cultofthepartyparrot.com/parrots/hd/parrotmustache.gif"),
+      gutterIconPath: vscode.Uri.parse("https://cultofthepartyparrot.com/parrots/hd/hardhatparrot.gif"),
       gutterIconSize: "100%",
       // "https://www.fileformat.info/info/unicode/char/22a2/right_tack.png",
-      outlineColor: "lightgreen",
+      outlineColor: "green",
     };
     this.decoration = vscode.window.createTextEditorDecorationType(decoStyle);
   }
@@ -268,10 +291,16 @@ export class ImandraServer implements vscode.Disposable {
   public dispose() {
     this.subscriptions.forEach(x => x.dispose());
     this.subscriptions.length = 0;
-    this.server.close();
-    if (this.connected() && this.subproc) {
+    this.docs.forEach((d, _) => d.dispose());
+    this.diagnostics.clear();
+    // idempotent disposal
+    if (this.st !== state.Disposed) {
       this.st = state.Disposed;
-      this.subproc.kill();
+      try {
+        if (this.subproc) this.subproc.kill();
+      } catch (_) {}
+      this.server.close();
+      this.procDie.fire(); // notify
     }
   }
 
@@ -339,6 +368,7 @@ export class ImandraServer implements vscode.Disposable {
   }
 
   private async changeVisibleEditors(eds: vscode.TextEditor[]) {
+    // TODO: cancel current computations on hidden buffers
     this.docs.forEach((d, _) => d.resetEditor()); // clear
     for (const ed of eds) {
       const key = ed.document.uri.fsPath.toString();
@@ -354,7 +384,7 @@ export class ImandraServer implements vscode.Disposable {
   private handleRes(res: response.Res) {
     switch (res.kind) {
       case "valid": {
-        console.log(`res: valid! (range ${inspect(res.range)})`);
+        console.log(`res (v${res.version}): valid! (range ${inspect(res.range)})`);
         const d = this.docs.get(res.uri);
         if (d) {
           const r = IRangeToRange(res.range);
@@ -367,7 +397,7 @@ export class ImandraServer implements vscode.Disposable {
         return;
       }
       case "error": {
-        console.log(`res: error (range ${inspect(res.range)})`);
+        console.log(`res (v${res.version}): error! (range ${inspect(res.range)})`);
         const d = this.docs.get(res.uri);
         if (d) {
           const r = IRangeToRange(res.range);
@@ -402,7 +432,7 @@ export class ImandraServer implements vscode.Disposable {
   }
 
   /// attach to changes in documents
-  public async init() {
+  public async init(onConn: (_: boolean) => void) {
     // listen on random port
     console.log("connecting to imandra-vscode-server...");
     // TODO: use `opam exec -- imandra-vscode-server` instead
@@ -411,8 +441,9 @@ export class ImandraServer implements vscode.Disposable {
     const args = [...(this.debug ? ["-d", "4"] : []), "--host", "127.0.0.1", "--port", port.toString()];
     //console.log("call imandra-vscode-server with args ", args);
     const sockP = waitForConnectionPromise(this.server);
-    const subproc = proc.spawn(this.serverPath, args, { stdio: ["ignore", "pipe", "pipe"] });
+    const subproc = proc.spawn(this.config.serverPath, args, { stdio: ["ignore", "pipe", "pipe"] });
     if (!subproc.pid) {
+      onConn(false);
       this.dispose();
       return;
     }
@@ -433,15 +464,95 @@ export class ImandraServer implements vscode.Disposable {
       await this.changeVisibleEditors(vscode.window.visibleTextEditors);
       vscode.window.onDidChangeVisibleTextEditors(this.changeVisibleEditors, this, this.subscriptions);
     }
+    onConn(this.connected());
+  }
+}
+
+const MAX_RESTARTS: number = 5;
+const RESTART_LIMIT_TIMEOUT_S = 30;
+
+/**
+ * A long-lived wrapper that maintains an `ImandraServerConn` and restarts
+ * it when needed.
+ */
+export class ImandraServer implements vscode.Disposable {
+  private conn?: ImandraServerConn; // current connection
+  private config: ImandraServerConfig;
+  private nRestarts = 0;
+  private lastSuccessfulStart = Date.now();
+  private status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+
+  private setStatus(ok: boolean) {
+    if (ok) {
+      this.status.text = "[imandra-server: active ✔]";
+      this.status.tooltip = "Connection to imandra-vscode-server established";
+    } else {
+      this.status.text = "[imandra-server: dead ×]";
+      this.status.tooltip = `Lost connection to imandra-vscode-server (${this.nRestarts} restarts)`;
+    }
+    this.status.show();
+  }
+
+  private setupConn() {
+    if (this.conn && this.conn.connected()) return; // already there
+    const timeSince = Date.now() - this.lastSuccessfulStart;
+    if (this.nRestarts > MAX_RESTARTS && timeSince < RESTART_LIMIT_TIMEOUT_S) {
+      console.log(`did ${this.nRestarts} restarts of imandra-vscode-server within ${timeSince}s, give up`);
+      this.conn = undefined;
+      this.setStatus(false);
+      return;
+    }
+    this.conn = new ImandraServerConn(this.config);
+    this.conn.onProcDied(() => {
+      this.conn = undefined;
+      this.setStatus(false);
+      this.nRestarts++;
+
+      // try to restart in a little while
+      setTimeout(() => {
+        console.log("try to restart imandra-vscode-server");
+        this.setupConn();
+      }, 5 * 1000);
+    });
+    // now start the connection
+    this.conn.init(ok => {
+      this.setStatus(ok);
+      if (ok) {
+        this.nRestarts = 0;
+        this.lastSuccessfulStart = Date.now();
+      } else {
+        this.conn = undefined;
+      }
+    });
+  }
+
+  public init() {
+    console.log("init imandra server...");
+    this.setupConn();
+  }
+
+  constructor(config?: ImandraServerConfig) {
+    this.config = { ...defaultImandraServerConfig, ...config };
+    this.status.hide();
+  }
+
+  public dispose() {
+    this.status.dispose();
+    if (this.conn) {
+      this.conn.dispose();
+      this.conn = undefined;
+    }
   }
 }
 
 export async function launch(_ctx: vscode.ExtensionContext): Promise<vscode.Disposable> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
-  const clientPath = imandraConfig.get<string>("path.imandra-vscode-server", "imandra-vscode-server");
-  const debug = imandraConfig.get<boolean>("debug-vscode-server", false);
-  const server = new ImandraServer(debug);
-  server.serverPath = clientPath;
-  await server.init();
+  const config = {
+    ...defaultImandraServerConfig,
+    debug: imandraConfig.get<boolean>("debug-vscode-server", false),
+    serverPath: imandraConfig.get<string>("path.imandra-vscode-server", "imandra-vscode-server"),
+  };
+  const server = new ImandraServer(config);
+  server.init();
   return Promise.resolve(server);
 }
