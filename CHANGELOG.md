@@ -1,3 +1,15 @@
+## 0.2.8
+
+Updating comment completion to erradicate bug on comment auto-closing. 
+
+## 0.2.7
+
+Fixing erroneous print statement in underlying language server.
+
+## 0.2.4
+
+Use by default the imandra switch created with imandra installation. Update error message when merlin fails.
+
 ## 0.2.3
 
 Updating merlin to use public extracted imandra-prelude.
