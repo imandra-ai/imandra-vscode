@@ -5,6 +5,7 @@ import * as proc from "child_process";
 import * as net from "net";
 import { promisify, inspect } from "util";
 import * as assert from "assert";
+import * as path from "path";
 
 enum state {
   Start,
@@ -92,7 +93,7 @@ namespace response {
     range: IRange;
     uri: string;
     version: number;
-    msg: string;
+    msg: string[];
   }
 
   export interface IError {
@@ -274,13 +275,14 @@ export class ImandraServerConn implements vscode.Disposable {
     return this.procDie.event;
   }
 
-  public constructor(config: ImandraServerConfig) {
+  public constructor(config: ImandraServerConfig, ctx: vscode.ExtensionContext) {
     this.config = config;
     this.server = net.createServer();
     const decoStyle: vscode.DecorationRenderOptions = {
       //backgroundColor: new vscode.ThemeColor("editor.wordHighlightBackground"),
       overviewRulerColor: "green",
-      gutterIconPath: vscode.Uri.parse("https://cultofthepartyparrot.com/parrots/hd/hardhatparrot.gif"),
+      gutterIconPath: ctx.asAbsolutePath(path.join("assets", "imandra-smile.png")),
+      // vscode.Uri.parse("https://cultofthepartyparrot.com/parrots/hd/hardhatparrot.gif"),
       gutterIconSize: "100%",
       // "https://www.fileformat.info/info/unicode/char/22a2/right_tack.png",
       outlineColor: "green",
@@ -391,7 +393,7 @@ export class ImandraServerConn implements vscode.Disposable {
           const r = IRangeToRange(res.range);
           const deco = {
             range: r,
-            hoverMessage: "```\n" + res.msg + "\n```",
+            hoverMessage: res.msg,
           };
           d.addDecoration(res.version, deco);
         }
@@ -479,6 +481,7 @@ const RESTART_LIMIT_TIMEOUT_S = 30;
 export class ImandraServer implements vscode.Disposable {
   private conn?: ImandraServerConn; // current connection
   private config: ImandraServerConfig;
+  private ctx: vscode.ExtensionContext;
   private nRestarts = 0;
   private lastSuccessfulStart = Date.now();
   private status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
@@ -516,7 +519,7 @@ export class ImandraServer implements vscode.Disposable {
       this.setStatus(false);
       return;
     }
-    this.conn = new ImandraServerConn(this.config);
+    this.conn = new ImandraServerConn(this.config, this.ctx);
     this.conn.onProcDied(() => {
       this.conn = undefined;
       this.setStatus(false);
@@ -551,7 +554,8 @@ export class ImandraServer implements vscode.Disposable {
     this.setupConn();
   }
 
-  constructor(config?: ImandraServerConfig) {
+  constructor(ctx: vscode.ExtensionContext, config?: ImandraServerConfig) {
+    this.ctx = ctx;
     this.config = { ...defaultImandraServerConfig, ...config };
     this.status.hide();
   }
@@ -567,14 +571,14 @@ export class ImandraServer implements vscode.Disposable {
   }
 }
 
-export async function launch(_ctx: vscode.ExtensionContext): Promise<vscode.Disposable> {
+export async function launch(ctx: vscode.ExtensionContext): Promise<vscode.Disposable> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
   const config = {
     ...defaultImandraServerConfig,
     debug: imandraConfig.get<boolean>("debug-vscode-server", false),
     serverPath: imandraConfig.get<string>("path.imandra-vscode-server", "imandra-vscode-server"),
   };
-  const server = new ImandraServer(config);
+  const server = new ImandraServer(ctx, config);
   server.init();
   return Promise.resolve(server);
 }
