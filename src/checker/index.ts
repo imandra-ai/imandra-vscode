@@ -291,7 +291,7 @@ export class ImandraServerConn implements vscode.Disposable {
       //backgroundColor: new vscode.ThemeColor("editor.wordHighlightBackground"),
       overviewRulerColor: "green",
       gutterIconPath: ctx.asAbsolutePath(path.join("assets", "imandra-smile.png")),
-      gutterIconSize: "100%",
+      gutterIconSize: "70%",
       outlineColor: "green",
     };
     this.decoration = vscode.window.createTextEditorDecorationType(decoStyle);
