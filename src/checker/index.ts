@@ -188,9 +188,9 @@ class DocState implements vscode.Disposable {
     }
   }
   public updateDoc(d: vscode.TextDocument) {
-    assert(d.uri.fsPath.toString() === this.uriStr && d.version >= this.version); // same doc
+    assert(d.uri.fsPath === this.uriStr && d.version >= this.version); // same doc
     if (this.server.debug) {
-      console.log(`docstate[uri=${d.uri.toString()}]: update to v${d.version} (current v${this.version})`);
+      console.log(`docstate[uri=${d.uri.fsPath}]: update to v${d.version} (current v${this.version})`);
     }
     if (d.version > this.version) {
       this.cleanAll();
@@ -248,6 +248,8 @@ export class ImandraServerConn implements vscode.Disposable {
       this.st = state.Disposed;
       return;
     }
+    sock.setNoDelay();
+    sock.setKeepAlive(true);
     this.subproc.on("close", (code, signal) => {
       console.log(`imandra-vscode closed with code=${code}, signal=${signal}`);
       this.dispose();
@@ -308,7 +310,7 @@ export class ImandraServerConn implements vscode.Disposable {
       this.st = state.Disposed;
       try {
         if (this.subproc) this.subproc.kill();
-      } catch (_) {}
+      } catch (_) { }
       this.server.close();
       this.procDie.fire(); // notify
     }
@@ -336,7 +338,7 @@ export class ImandraServerConn implements vscode.Disposable {
 
   private async addDoc(d: vscode.TextDocument) {
     if (!isDocIml(d)) return;
-    const key = d.uri.fsPath.toString();
+    const key = d.uri.fsPath;
     const isNew = !this.docs.has(key);
     // insert a new docstate
     this.docs.set(key, new DocState(d, this));
@@ -351,7 +353,7 @@ export class ImandraServerConn implements vscode.Disposable {
 
   private async removeDoc(d: vscode.TextDocument) {
     if (!isDocIml(d)) return;
-    const key = d.uri.fsPath.toString();
+    const key = d.uri.fsPath;
     const dSt = this.docs.get(key);
     if (dSt) {
       this.docs.delete(key);
@@ -363,7 +365,7 @@ export class ImandraServerConn implements vscode.Disposable {
   private async changeDoc(d: vscode.TextDocumentChangeEvent) {
     if (!isDocIml(d.document)) return;
     console.log(`[connected: ${this.connected()}]: change doc ${d.document.uri} version ${d.document.version}`);
-    const key = d.document.uri.fsPath.toString();
+    const key = d.document.uri.fsPath;
     let needsMsg = true;
     const newVersion = d.document.version;
     // update stored document
@@ -380,7 +382,7 @@ export class ImandraServerConn implements vscode.Disposable {
         if (dState.version === newVersion) {
           this.sendMsg({
             kind: "doc_update",
-            uri: d.document.uri.fsPath.toString(),
+            uri: key,
             new_content: d.document.getText(),
             version: d.document.version,
           });
@@ -393,7 +395,7 @@ export class ImandraServerConn implements vscode.Disposable {
     // TODO: cancel current computations on hidden buffers
     this.docs.forEach((d, _) => d.resetEditor()); // clear
     for (const ed of eds) {
-      const key = ed.document.uri.fsPath.toString();
+      const key = ed.document.uri.fsPath;
       const d = this.docs.get(key);
       if (d) {
         d.setEditor(ed);
