@@ -126,23 +126,26 @@ namespace response {
 class DocState implements vscode.Disposable {
   private curDiags: vscode.Diagnostic[] = [];
   private curDecorations: vscode.DecorationOptions[] = [];
+  private curVersion: number;
   private doc: vscode.TextDocument;
   private server: ImandraServerConn;
   private editor?: vscode.TextEditor;
   constructor(d: vscode.TextDocument, server: ImandraServerConn) {
     this.doc = d;
+    this.curVersion = d.version;
     this.server = server;
   }
-  public uri(): vscode.Uri {
+  public get uri(): vscode.Uri {
     return this.doc.uri;
   }
-  public uriStr(): string {
+  public get uriStr(): string {
     return this.doc.uri.fsPath;
   }
   public setEditor(ed: vscode.TextEditor) {
     assert(this.doc === ed.document);
     if (this.editor) this.editor.setDecorations(this.server.decoration, []);
     this.editor = ed;
+    ed.setDecorations(this.server.decoration, this.curDecorations);
   }
   public resetEditor() {
     if (this.editor) {
@@ -150,8 +153,8 @@ class DocState implements vscode.Disposable {
     }
     this.editor = undefined;
   }
-  public version(): number {
-    return this.doc.version;
+  public get version(): number {
+    return this.curVersion;
   }
   public document(): vscode.TextDocument {
     return this.doc;
@@ -160,14 +163,14 @@ class DocState implements vscode.Disposable {
     return this.doc.getText();
   }
   public addDiagnostic(version: number, d: vscode.Diagnostic) {
-    if (version === this.version()) {
+    if (version === this.version) {
       this.curDiags.push(d);
       // update the diagnostic collection
-      this.server.diagnostics.set(this.uri(), this.curDiags);
+      this.server.diagnostics.set(this.uri, this.curDiags);
     }
   }
   public addDecoration(version: number, d: vscode.DecorationOptions) {
-    if (version === this.version()) {
+    if (version === this.version) {
       this.curDecorations.push(d);
       this.updateDecorations();
     }
@@ -178,16 +181,22 @@ class DocState implements vscode.Disposable {
   private cleanAll() {
     // clear diagnostics and decorations
     this.curDiags.length = 0;
-    this.server.diagnostics.delete(this.uri());
+    this.server.diagnostics.delete(this.uri);
     this.curDecorations.length = 0;
     if (this.editor) {
       this.editor.setDecorations(this.server.decoration, []);
     }
   }
   public updateDoc(d: vscode.TextDocument) {
-    assert(d.uri.fsPath.toString() === this.uriStr() && d.version >= this.version()); // same doc
+    assert(d.uri.fsPath.toString() === this.uriStr && d.version >= this.version); // same doc
+    if (this.server.debug) {
+      console.log(`docstate[uri=${d.uri.toString()}]: update to v${d.version} (current v${this.version})`);
+    }
+    if (d.version > this.version) {
+      this.cleanAll();
+    }
     this.doc = d;
-    this.cleanAll();
+    this.curVersion = d.version;
   }
   public dispose() {
     this.cleanAll();
@@ -225,7 +234,7 @@ export class ImandraServerConn implements vscode.Disposable {
   public decoration: vscode.TextEditorDecorationType;
   private procDie: vscode.EventEmitter<void> = new vscode.EventEmitter();
 
-  private get debug(): boolean {
+  public get debug(): boolean {
     return this.config.debug;
   }
 
@@ -355,17 +364,29 @@ export class ImandraServerConn implements vscode.Disposable {
     if (!isDocIml(d.document)) return;
     console.log(`[connected: ${this.connected()}]: change doc ${d.document.uri} version ${d.document.version}`);
     const key = d.document.uri.fsPath.toString();
-    {
-      // update stored document
-      const dState = this.docs.get(key);
-      if (dState) dState.updateDoc(d.document);
+    let needsMsg = true;
+    const newVersion = d.document.version;
+    // update stored document
+    const dState = this.docs.get(key);
+    if (dState) {
+      if (dState.version === newVersion) needsMsg = false;
+      dState.updateDoc(d.document);
     }
-    await this.sendMsg({
-      kind: "doc_update",
-      uri: d.document.uri.fsPath.toString(),
-      new_content: d.document.getText(),
-      version: d.document.version,
-    });
+    if (dState && needsMsg) {
+      // basic debounce: wait to see if there's another update within 300ms,
+      // in which case, it'll do the update
+      setTimeout(() => {
+        // TODO: send patches instead
+        if (dState.version === newVersion) {
+          this.sendMsg({
+            kind: "doc_update",
+            uri: d.document.uri.fsPath.toString(),
+            new_content: d.document.getText(),
+            version: d.document.version,
+          });
+        }
+      }, 300);
+    }
   }
 
   private async changeVisibleEditors(eds: vscode.TextEditor[]) {
@@ -412,8 +433,8 @@ export class ImandraServerConn implements vscode.Disposable {
       case "ack": {
         const d = this.docs.get(res.uri);
         if (this.debug) console.log(`got ack for document update version: ${res.version} uri: "${res.uri}"`);
-        assert(!d || res.version <= d.version()); // no docs from the future
-        if (d && d.version() === res.version) {
+        assert(!d || res.version <= d.version); // no docs from the future
+        if (d && d.version === res.version) {
           // check that length corresponds, just to be sure
           const expectedLen = d.getText().length;
           assert(expectedLen === res.len, `expected len ${expectedLen}, reported len ${res.len}`);
