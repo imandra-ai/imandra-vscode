@@ -385,7 +385,7 @@ export class ImandraServerConn implements vscode.Disposable {
   private handleRes(res: response.Res) {
     switch (res.kind) {
       case "valid": {
-        console.log(`res (v${res.version}): valid! (range ${inspect(res.range)})`);
+        if (this.debug) console.log(`res (v${res.version}): valid! (range ${inspect(res.range)})`);
         const d = this.docs.get(res.uri);
         if (d) {
           const r = IRangeToRange(res.range);
@@ -398,7 +398,7 @@ export class ImandraServerConn implements vscode.Disposable {
         return;
       }
       case "error": {
-        console.log(`res (v${res.version}): error! (range ${inspect(res.range)})`);
+        if (this.debug) console.log(`res (v${res.version}): error! (range ${inspect(res.range)})`);
         const d = this.docs.get(res.uri);
         if (d) {
           const r = IRangeToRange(res.range);
@@ -411,7 +411,7 @@ export class ImandraServerConn implements vscode.Disposable {
       }
       case "ack": {
         const d = this.docs.get(res.uri);
-        console.log(`got ack for document update version: ${res.version} uri: "${res.uri}"`);
+        if (this.debug) console.log(`got ack for document update version: ${res.version} uri: "${res.uri}"`);
         assert(!d || res.version <= d.version()); // no docs from the future
         if (d && d.version() === res.version) {
           // check that length corresponds, just to be sure
@@ -448,8 +448,10 @@ export class ImandraServerConn implements vscode.Disposable {
       this.dispose();
       return;
     }
-    subproc.stderr.on("data", msg => console.log(`imandra.stderr: ${msg}`));
-    subproc.stdout.on("data", msg => console.log(`imandra.stdout: ${msg}`));
+    if (this.debug) {
+      subproc.stderr.on("data", msg => console.log(`imandra.stderr: ${msg}`));
+      subproc.stdout.on("data", msg => console.log(`imandra.stdout: ${msg}`));
+    }
     console.log(`waiting for connection (pid: ${subproc.pid})...`);
     const sock = await sockP;
     console.log("got connection!");
@@ -573,9 +575,10 @@ export async function launch(ctx: vscode.ExtensionContext): Promise<vscode.Dispo
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
   const config = {
     ...defaultImandraServerConfig,
-    debug: imandraConfig.get<boolean>("debug-vscode-server", false),
+    debug: imandraConfig.get<boolean>("debug.imandra-vscode-server", false),
     serverPath: imandraConfig.get<string>("path.imandra-vscode-server", "imandra-vscode-server"),
   };
+  console.log(`imandra.debug: ${config.debug}`);
   const server = new ImandraServer(ctx, config);
   server.init();
   return Promise.resolve(server);
