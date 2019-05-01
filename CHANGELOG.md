@@ -1,3 +1,7 @@
+## 0.2.9
+
+Updating assocsuffix syntax to be in line with the new merlin.
+
 ## 0.2.8
 
 Updating comment completion to erradicate bug on comment auto-closing. 

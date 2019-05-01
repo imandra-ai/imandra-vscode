@@ -3,7 +3,7 @@
   "name": "iml-vscode",
   "displayName": "Imandra IDE",
   "description": "Imandra (ReasonML/OCaml) reasoning studio",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "publisher": "aestheticintegration",
   "bugs": {
     "url": "https://github.com/aestheticintegration/iml-vscode/issues"
@@ -139,6 +139,11 @@
           "default": "refmterr",
           "description": "The path to the `refmterr` binary."
         },
+        "imandra.path.switch": {
+          "type": "string",
+          "default": "/usr/local/var/imandra",
+          "description": "The path to where imandra-merlin is configured."
+        },
         "imandra.path.rtop": {
           "type": "string",
           "default": "rtop",
@@ -164,9 +169,9 @@
           "type": "array",
           "default": [
             "-addsuffix",
-            ".iml,.imli",
+            ".iml:.imli",
             "-addsuffix",
-            ".ire,.irei",
+            ".ire:.irei",
             "-open",
             "Imandra_prelude",
             "-assocsuffix",
