@@ -260,8 +260,14 @@ export class ImandraServerConn implements vscode.Disposable {
     });
     sock.on("data", j => {
       if (this.debug) console.log(`got message from imandra: ${j}`);
-      const res = JSON.parse(j.toString()) as response.Res;
-      this.handleRes(res);
+      for (const line of j.toString().split("\n")) {
+        try {
+          const res = JSON.parse(line) as response.Res;
+          this.handleRes(res);
+        } catch (e) {
+          console.log(`could not parse message's line ${line} as json`);
+        }
+      }
     });
     // regularly ping the server
     const timer = setInterval(() => {
@@ -310,7 +316,7 @@ export class ImandraServerConn implements vscode.Disposable {
       this.st = state.Disposed;
       try {
         if (this.subproc) this.subproc.kill();
-      } catch (_) { }
+      } catch (_) {}
       this.server.close();
       this.procDie.fire(); // notify
     }
