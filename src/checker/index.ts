@@ -77,13 +77,20 @@ namespace msg {
     new_content: string;
   }
 
+  export interface IDocCheck {
+    kind: "doc_check";
+    uri: string;
+    version: number;
+    len: number;
+  }
+
   export interface IPing {
     kind: "ping";
     epoch: number;
   }
 
   /** Main interface for queries sent to imandra-vscode-server */
-  export type Msg = IDocAdd | IDocRemove | IDocUpdate | IPing;
+  export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IPing;
 }
 
 // responses from Imandra
@@ -110,6 +117,10 @@ namespace response {
     version: number;
     len: number; // length of document, in bytes
   }
+  export interface IResend {
+    kind: "resend";
+    uri: string;
+  }
 
   export interface IPong {
     kind: "pong";
@@ -117,7 +128,7 @@ namespace response {
   }
 
   /** A response from imandra */
-  export type Res = IError | IValid | IAck | IPong;
+  export type Res = IError | IValid | IAck | IResend | IPong;
 }
 
 /**
@@ -156,7 +167,7 @@ class DocState implements vscode.Disposable {
   public get version(): number {
     return this.curVersion;
   }
-  public document(): vscode.TextDocument {
+  public get document(): vscode.TextDocument {
     return this.doc;
   }
   public getText(): string {
@@ -260,12 +271,14 @@ export class ImandraServerConn implements vscode.Disposable {
     });
     sock.on("data", j => {
       if (this.debug) console.log(`got message from imandra: ${j}`);
-      for (const line of j.toString().split("\n")) {
+      for (let line of j.toString().split("\n")) {
+        line = line.trim();
+        if (line === "") continue;
         try {
           const res = JSON.parse(line) as response.Res;
           this.handleRes(res);
         } catch (e) {
-          console.log(`could not parse message's line ${line} as json`);
+          console.log(`could not parse message's line "${line}" as json`);
         }
       }
     });
@@ -342,6 +355,16 @@ export class ImandraServerConn implements vscode.Disposable {
     return;
   }
 
+  private async sendDoc(d: vscode.TextDocument) {
+    const key = d.uri.fsPath;
+    await this.sendMsg({
+      kind: "doc_add",
+      uri: key,
+      version: d.version,
+      text: d.getText(),
+    });
+  }
+
   private async addDoc(d: vscode.TextDocument) {
     if (!isDocIml(d)) return;
     const key = d.uri.fsPath;
@@ -349,12 +372,7 @@ export class ImandraServerConn implements vscode.Disposable {
     // insert a new docstate
     this.docs.set(key, new DocState(d, this));
     assert(isNew);
-    await this.sendMsg({
-      kind: "doc_add",
-      uri: key,
-      version: d.version,
-      text: d.getText(),
-    });
+    await this.sendDoc(d);
   }
 
   private async removeDoc(d: vscode.TextDocument) {
@@ -381,16 +399,22 @@ export class ImandraServerConn implements vscode.Disposable {
       dState.updateDoc(d.document);
     }
     if (dState && needsMsg) {
+      // TODO: send patches instead
+      await this.sendMsg({
+        kind: "doc_update",
+        uri: key,
+        new_content: d.document.getText(),
+        version: d.document.version,
+      });
       // basic debounce: wait to see if there's another update within 300ms,
-      // in which case, it'll do the update
+      // in which case, it'll do the `check` call. Otherwise we ask to check this version.
       setTimeout(() => {
-        // TODO: send patches instead
         if (dState.version === newVersion) {
           this.sendMsg({
-            kind: "doc_update",
+            kind: "doc_check",
             uri: key,
-            new_content: d.document.getText(),
-            version: d.document.version,
+            version: newVersion,
+            len: d.document.getText().length,
           });
         }
       }, 300);
@@ -446,6 +470,14 @@ export class ImandraServerConn implements vscode.Disposable {
           // check that length corresponds, just to be sure
           const expectedLen = d.getText().length;
           assert(expectedLen === res.len, `expected len ${expectedLen}, reported len ${res.len}`);
+        }
+        return;
+      }
+      case "resend": {
+        // imandra is desync'd, resend this doc
+        const d = this.docs.get(res.uri);
+        if (d) {
+          this.sendDoc(d.document);
         }
         return;
       }
