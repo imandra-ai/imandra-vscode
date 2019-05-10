@@ -88,9 +88,12 @@ namespace msg {
     kind: "ping";
     epoch: number;
   }
+  export interface ISync {
+    kind: "sync";
+  }
 
   /** Main interface for queries sent to imandra-vscode-server */
-  export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IPing;
+  export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IPing | ISync;
 }
 
 // responses from Imandra
@@ -335,9 +338,17 @@ export class ImandraServerConn implements vscode.Disposable {
     if (this.st !== state.Disposed) {
       console.log("disconnecting imandra-vscode-server…");
       this.st = state.Disposed;
-      try {
-        if (this.subproc) this.subproc.kill();
-      } catch (_) {}
+      if (this.subproc) {
+        const subproc = this.subproc;
+        // give a bit of time to subprocess to catch up before killing it
+        setTimeout(() => {
+          try {
+            subproc.kill();
+          } catch (_) {}
+        }, 800);
+      }
+      this.subproc = undefined;
+
       this.server.close();
       this.procDie.fire(); // notify
     }
@@ -580,9 +591,19 @@ export class ImandraServer implements vscode.Disposable {
     this.status.show();
   }
 
+  private async trySync() {
+    if (this.conn) {
+      console.log("send `sync` message");
+      try {
+        await this.conn.sendMsg({ kind: "sync" });
+      } catch {}
+    }
+  }
+
   // restart connection
   private restart() {
     if (this.conn) {
+      this.trySync();
       this.conn.dispose();
       this.conn = undefined;
     }
@@ -641,16 +662,19 @@ export class ImandraServer implements vscode.Disposable {
     this.status.hide();
   }
 
-  public dispose() {
+  public async dispose() {
     this.status.dispose();
     this.subscriptions.forEach(d => d.dispose());
     this.subscriptions.length = 0;
     if (this.conn) {
+      await this.trySync();
       this.conn.dispose();
       this.conn = undefined;
     }
   }
 }
+
+let cur: ImandraServer | null = null;
 
 export async function launch(ctx: vscode.ExtensionContext): Promise<vscode.Disposable> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
@@ -661,6 +685,15 @@ export async function launch(ctx: vscode.ExtensionContext): Promise<vscode.Dispo
   };
   console.log(`imandra.debug: ${config.debug}`);
   const server = new ImandraServer(ctx, config);
+  if (cur) cur.dispose();
+  cur = server;
   server.init();
   return Promise.resolve(server);
+}
+
+export async function deactivate() {
+  if (cur) {
+    await cur.dispose();
+  }
+  cur = null;
 }

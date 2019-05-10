@@ -97,6 +97,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<vscode
   return vscode.Disposable.from(...ps);
 }
 
-export function deactivate() {
-  return;
+export async function deactivate(): Promise<void> {
+  console.log("deactivate");
+  await checker.deactivate();
 }
