@@ -88,12 +88,9 @@ namespace msg {
     kind: "ping";
     epoch: number;
   }
-  export interface ISync {
-    kind: "sync";
-  }
 
   /** Main interface for queries sent to imandra-vscode-server */
-  export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IPing | ISync;
+  export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IPing | "sync";
 }
 
 // responses from Imandra
@@ -595,7 +592,7 @@ export class ImandraServer implements vscode.Disposable {
     if (this.conn) {
       console.log("send `sync` message");
       try {
-        await this.conn.sendMsg({ kind: "sync" });
+        await this.conn.sendMsg("sync");
       } catch {}
     }
   }
