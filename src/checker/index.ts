@@ -96,7 +96,7 @@ namespace msg {
   }
 
   /** Main interface for queries sent to imandra-vscode-server */
-  export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IPing | "sync";
+  export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IPing | "cache_sync" | "cache_clear";
 }
 
 // responses from Imandra
@@ -465,7 +465,7 @@ export class ImandraServerConn implements vscode.Disposable {
   }
 
   // handle messages from imandra-vscode
-  private handleRes(res: response.Res) {
+  private async handleRes(res: response.Res) {
     switch (res.kind) {
       case "valid": {
         if (this.debug) console.log(`res (v${res.version}): valid! (range ${inspect(res.range)})`);
@@ -621,7 +621,7 @@ export class ImandraServer implements vscode.Disposable {
     if (this.conn) {
       console.log("send `sync` message");
       try {
-        await this.conn.sendMsg("sync");
+        await this.conn.sendMsg("cache_sync");
       } catch {}
     }
   }
@@ -677,6 +677,14 @@ export class ImandraServer implements vscode.Disposable {
       vscode.commands.registerCommand("imandra.server.reload", () => {
         console.log("imandra.server.reload called");
         this.restart();
+      }),
+      vscode.commands.registerCommand("imandra.server.cache.clear", () => {
+        console.log("imandra.server.cache.clear called");
+        if (this.conn) this.conn.sendMsg("cache_clear");
+      }),
+      vscode.commands.registerCommand("imandra.server.cache.sync", () => {
+        console.log("imandra.server.cache.sync called");
+        if (this.conn) this.conn.sendMsg("cache_sync");
       }),
     );
     this.setupConn();

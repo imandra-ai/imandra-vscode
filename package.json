@@ -284,6 +284,14 @@
       {
         "command": "imandra.server.reload",
         "title": "Imandra: reload semantic server"
+      },
+      {
+        "command": "imandra.server.cache.sync",
+        "title": "Imandra: synchronize cache to disk"
+      },
+      {
+        "command": "imandra.server.cache.clear",
+        "title": "Imandra: clear cache"
       }
     ]
   },
