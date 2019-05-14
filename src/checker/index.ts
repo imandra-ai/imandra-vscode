@@ -6,6 +6,7 @@ import * as net from "net";
 import { promisify, inspect } from "util";
 import * as assert from "assert";
 import * as path from "path";
+import * as crypto from "crypto";
 
 enum state {
   Start,
@@ -69,12 +70,17 @@ namespace msg {
     uri: string;
   }
 
-  // NOTE: non incremental, resends the whole doc. TODO: send patches instead.
+  export interface IDocChange {
+    range: IRange;
+    rangeLen: number;
+    text: string; // new text
+  }
+
   export interface IDocUpdate {
     kind: "doc_update";
     uri: string;
     version: number;
-    new_content: string;
+    changes: IDocChange[];
   }
 
   export interface IDocCheck {
@@ -124,6 +130,7 @@ namespace response {
     uri: string;
     version: number;
     len: number; // length of document, in bytes
+    md5: string; // md5 of content
   }
   export interface IResend {
     kind: "resend";
@@ -415,11 +422,18 @@ export class ImandraServerConn implements vscode.Disposable {
       dState.updateDoc(d.document);
     }
     if (dState && needsMsg) {
-      // TODO: send patches instead
+      const changes: msg.IDocChange[] = [];
+      for (const { text, range, rangeLength } of d.contentChanges) {
+        changes.push({
+          range: RangeToIRange(range),
+          rangeLen: rangeLength,
+          text,
+        });
+      }
       await this.sendMsg({
         kind: "doc_update",
         uri: key,
-        new_content: d.document.getText(),
+        changes,
         version: d.document.version,
       });
       // basic debounce: wait to see if there's another update within 300ms,
@@ -496,9 +510,24 @@ export class ImandraServerConn implements vscode.Disposable {
         assert(!d || res.version <= d.version); // no docs from the future
         if (d && d.version === res.version) {
           // check that length corresponds, just to be sure
-          const expectedLen = d.getText().length;
-          assert(expectedLen === res.len, `expected len ${expectedLen}, reported len ${res.len}`);
+          const text = d.getText();
+          const expectedLen = text.length;
+          if (expectedLen !== res.len) {
+            console.log(`ack: expected len ${expectedLen}, reported len ${res.len}. Resend.`);
+            this.sendDoc(d.document); // send again
+            return;
+          }
+          const expectedMd5 = crypto
+            .createHash("md5")
+            .update(text)
+            .digest("hex");
+          if (expectedLen !== res.len) {
+            console.log(`ack: expected md5 ${expectedMd5}, reported md5 ${res.md5}. Resend.`);
+            this.sendDoc(d.document); // send again
+            return;
+          }
         }
+        console.log("document is correct");
         return;
       }
       case "resend": {
