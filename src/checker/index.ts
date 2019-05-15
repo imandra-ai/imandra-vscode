@@ -53,7 +53,7 @@ function listenPromise(server: net.Server): Promise<void> {
 }
 
 function isDocIml(d: vscode.TextDocument): boolean {
-  return d.languageId === "imandra" || d.fileName.includes(".iml"); // TODO: improve on that!
+  return d.languageId === "imandra" || d.fileName.endsWith(".iml") || d.fileName.endsWith(".ire"); // TODO: improve on that!
 }
 
 // messages to imandra
@@ -61,6 +61,7 @@ namespace msg {
   export interface IDocAdd {
     kind: "doc_add";
     uri: string;
+    reason: boolean;
     version: number;
     text: string;
   }
@@ -380,9 +381,11 @@ export class ImandraServerConn implements vscode.Disposable {
 
   private async sendDoc(d: vscode.TextDocument) {
     const key = d.uri.fsPath;
+    const reason = key.endsWith(".ire") || key.endsWith(".re");
     await this.sendMsg({
       kind: "doc_add",
       uri: key,
+      reason,
       version: d.version,
       text: d.getText(),
     });
