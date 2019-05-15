@@ -224,7 +224,7 @@ class DocState implements vscode.Disposable {
     }
   }
   public addDecoration(version: number, d: vscode.DecorationOptions) {
-    if (version === this.version) {
+    if (version === this.version && this.hasEditor) {
       this.curDecorations.push(d);
       this.updateDecorations();
     }
@@ -376,7 +376,7 @@ export class ImandraServerConn implements vscode.Disposable {
         setTimeout(() => {
           try {
             subproc.kill();
-          } catch (_) {}
+          } catch (_) { }
         }, 800);
       }
       this.subproc = undefined;
@@ -651,7 +651,7 @@ export class ImandraServer implements vscode.Disposable {
       console.log("send `sync` message");
       try {
         await this.conn.sendMsg("cache_sync");
-      } catch {}
+      } catch { }
     }
   }
 
