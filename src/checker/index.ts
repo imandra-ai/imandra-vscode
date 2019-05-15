@@ -91,13 +91,19 @@ namespace msg {
     len: number;
   }
 
+  export interface IDocCancel {
+    kind: "doc_cancel";
+    uri: string;
+    version: number;
+  }
+
   export interface IPing {
     kind: "ping";
     epoch: number;
   }
 
   /** Main interface for queries sent to imandra-vscode-server */
-  export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IPing | "cache_sync" | "cache_clear";
+  export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IDocCancel | IPing | "cache_sync" | "cache_clear";
 }
 
 // responses from Imandra
@@ -154,9 +160,13 @@ class DocState implements vscode.Disposable {
   private curDiags: vscode.Diagnostic[] = [];
   private curDecorations: vscode.DecorationOptions[] = [];
   private curVersion: number;
+  private hadEditor = false; // had an editor before last call to `clearEditor()`
   private doc: vscode.TextDocument;
   private server: ImandraServerConn;
   private editor?: vscode.TextEditor;
+  private get debug(): boolean {
+    return this.server.debug;
+  }
   constructor(d: vscode.TextDocument, server: ImandraServerConn) {
     this.doc = d;
     this.curVersion = d.version;
@@ -180,17 +190,34 @@ class DocState implements vscode.Disposable {
     }
     this.editor = undefined;
   }
+  public updateEditor() {
+    if (this.editor) {
+      this.hadEditor = true;
+      this.updateDecorations();
+      if (this.debug) console.log(`send doc_check for ${this.uri}:${this.version}`);
+      this.server.sendMsg({ kind: "doc_check", version: this.version, uri: this.uriStr, len: this.text.length });
+    } else if (this.hadEditor) {
+      // had an editor but not anymore: cancel any lingering computation
+      this.hadEditor = false;
+      this.curDecorations = [];
+      if (this.debug) console.log(`send doc_cancel for ${this.uri}:${this.version}`);
+      this.server.sendMsg({ kind: "doc_cancel", version: this.version, uri: this.uriStr });
+    }
+  }
+  public get hasEditor(): boolean {
+    return this.editor !== undefined;
+  }
   public get version(): number {
     return this.curVersion;
   }
   public get document(): vscode.TextDocument {
     return this.doc;
   }
-  public getText(): string {
+  public get text(): string {
     return this.doc.getText();
   }
   public addDiagnostic(version: number, d: vscode.Diagnostic) {
-    if (version === this.version) {
+    if (version === this.version && this.hasEditor) {
       this.curDiags.push(d);
       // update the diagnostic collection
       this.server.diagnostics.set(this.uri, this.curDiags);
@@ -442,7 +469,7 @@ export class ImandraServerConn implements vscode.Disposable {
       // basic debounce: wait to see if there's another update within 300ms,
       // in which case, it'll do the `check` call. Otherwise we ask to check this version.
       setTimeout(() => {
-        if (dState.version === newVersion) {
+        if (dState.version === newVersion && dState.hasEditor) {
           this.sendMsg({
             kind: "doc_check",
             uri: key,
@@ -455,16 +482,15 @@ export class ImandraServerConn implements vscode.Disposable {
   }
 
   private async changeVisibleEditors(eds: vscode.TextEditor[]) {
-    // TODO: cancel current computations on hidden buffers
-    this.docs.forEach((d, _) => d.resetEditor()); // clear
+    this.docs.forEach((d, _) => d.resetEditor()); // clear current editor
     for (const ed of eds) {
       const key = ed.document.uri.fsPath;
       const d = this.docs.get(key);
       if (d) {
         d.setEditor(ed);
-        d.updateDecorations();
       }
     }
+    this.docs.forEach((d, _) => d.updateEditor());
   }
 
   // handle messages from imandra-vscode
@@ -513,7 +539,7 @@ export class ImandraServerConn implements vscode.Disposable {
         assert(!d || res.version <= d.version); // no docs from the future
         if (d && d.version === res.version) {
           // check that length corresponds, just to be sure
-          const text = d.getText();
+          const text = d.text;
           const expectedLen = text.length;
           if (expectedLen !== res.len) {
             console.log(`ack: expected len ${expectedLen}, reported len ${res.len}. Resend.`);
