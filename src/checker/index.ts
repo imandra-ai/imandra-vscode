@@ -106,6 +106,8 @@ namespace msg {
   export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IDocCancel | IPing | "cache_sync" | "cache_clear";
 }
 
+const CUR_PROTOCOL_VERSION: string = "0.1";
+
 // responses from Imandra
 namespace response {
   export interface IValid {
@@ -149,8 +151,13 @@ namespace response {
     epoch: number;
   }
 
+  export interface IVersion {
+    kind: "version";
+    v: string; // current version number for the protocole
+  }
+
   /** A response from imandra */
-  export type Res = IError | IValid | IWarning | IAck | IResend | IPong;
+  export type Res = IError | IValid | IWarning | IAck | IResend | IVersion | IPong;
 }
 
 /**
@@ -376,7 +383,7 @@ export class ImandraServerConn implements vscode.Disposable {
         setTimeout(() => {
           try {
             subproc.kill();
-          } catch (_) { }
+          } catch (_) {}
         }, 800);
       }
       this.subproc = undefined;
@@ -572,6 +579,13 @@ export class ImandraServerConn implements vscode.Disposable {
         this.lastPongEpoch = Math.max(this.lastPongEpoch, res.epoch);
         return;
       }
+      case "version": {
+        if (res.v !== CUR_PROTOCOL_VERSION) {
+          console.log(`error: imandra-server has version ${res.v}, not ${CUR_PROTOCOL_VERSION} as expected`);
+          this.dispose();
+        }
+        return;
+      }
       default: {
         const _exhaustiveCheck: never = res;
         return _exhaustiveCheck;
@@ -651,7 +665,7 @@ export class ImandraServer implements vscode.Disposable {
       console.log("send `sync` message");
       try {
         await this.conn.sendMsg("cache_sync");
-      } catch { }
+      } catch {}
     }
   }
 
