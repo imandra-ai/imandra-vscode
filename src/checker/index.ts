@@ -106,7 +106,7 @@ namespace msg {
   export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IDocCancel | IPing | "cache_sync" | "cache_clear";
 }
 
-const CUR_PROTOCOL_VERSION: string = "0.1";
+const CUR_PROTOCOL_VERSION: string = "0.2";
 
 // responses from Imandra
 namespace response {
@@ -288,11 +288,54 @@ export const defaultImandraServerConfig: ImandraServerConfig = {
 };
 
 /**
+ * Internal buffer for processing lines
+ */
+class LineBuffer {
+  private buf = Buffer.alloc(16 * 1024);
+  private len = 0; // len of slice in buf
+  private lineIdx = 0;
+
+  // Add content of `b` to the internal buffer
+  public addBuf(b: Buffer) {
+    if (this.len + b.length > this.buf.length) {
+      const newBuf = Buffer.alloc(this.buf.length + b.length + 10); // realloc
+      this.buf.copy(newBuf);
+      this.buf = newBuf;
+    }
+    assert(this.buf.length >= this.len + b.length);
+    b.copy(this.buf, this.len);
+    this.len += b.length;
+  }
+
+  public hasLine(): boolean {
+    const i = this.buf.slice(0, this.len).indexOf("\n");
+    this.lineIdx = i;
+    assert(i < this.len, "invalid line index (>len)");
+    return i >= 0;
+  }
+  public getLine(): string {
+    const n = this.lineIdx;
+    if (n >= 0) {
+      assert(n < this.len);
+      const s = this.buf.slice(0, n + 1).toString();
+      // now remove prefix
+      this.buf.copy(this.buf, 0, n + 1);
+      this.len -= n + 1;
+      this.lineIdx = -1;
+      return s;
+    } else {
+      return "";
+    }
+  }
+}
+
+/**
  * A connection to imandra-vscode-server, as well as the current
  * set of active documents/editors
  */
 export class ImandraServerConn implements vscode.Disposable {
   private config: ImandraServerConfig;
+  private buffer = new LineBuffer();
   private st: state = state.Start;
   private subprocConn: undefined | net.Socket;
   private subproc: undefined | proc.ChildProcess; // connection to imandra server
@@ -329,16 +372,18 @@ export class ImandraServerConn implements vscode.Disposable {
       console.log(`imandra-vscode exited with ${code}`);
       this.dispose();
     });
-    sock.on("data", j => {
-      if (this.debug) console.log(`got message from imandra: ${j}`);
-      for (let line of j.toString().split("\n")) {
-        line = line.trim();
+    sock.on("data", data => {
+      if (this.debug) console.log(`got message from imandra: ${data}`);
+      // add to internal buffer
+      this.buffer.addBuf(data);
+      while (this.buffer.hasLine()) {
+        const line = this.buffer.getLine().trim();
         if (line === "") continue;
         try {
           const res = JSON.parse(line) as response.Res;
           this.handleRes(res);
         } catch (e) {
-          console.log(`could not parse message's line "${line}" as json`);
+          console.log(`ERROR: could not parse message's line "${line}" as json`);
         }
       }
     });
