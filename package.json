@@ -119,6 +119,11 @@
           "default": "imandra-vscode-server",
           "description": "The path to the `imandra-vscode-server` binary."
         },
+        "imandra.dev.cache.imandra-vscode-server": {
+          "type": "boolean",
+          "default": "false",
+          "description": "Enable local persistent cache for the imandra server."
+        },
         "imandra.debug.imandra-vscode-server": {
           "type": "boolean",
           "default": false,

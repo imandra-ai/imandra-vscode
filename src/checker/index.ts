@@ -270,11 +270,13 @@ const MAX_EPOCH_MISSED = 3; // maximum number of missed "ping" we accept before 
 export interface ImandraServerConfig {
   debug: boolean;
   serverPath: string;
+  persistentCache: boolean;
 }
 
 export const defaultImandraServerConfig: ImandraServerConfig = {
   serverPath: "imandra-vscode-server",
   debug: false,
+  persistentCache: false,
 };
 
 /**
@@ -600,8 +602,15 @@ export class ImandraServerConn implements vscode.Disposable {
     // TODO: use `opam exec -- imandra-vscode-server` instead
     await listenPromise(this.server);
     const port = this.server.address().port;
-    const args = [...(this.debug ? ["-d", "4"] : []), "--host", "127.0.0.1", "--port", port.toString()];
-    //console.log("call imandra-vscode-server with args ", args);
+    const args = [
+      ...(this.debug ? ["-d", "4"] : []),
+      ...(this.config.persistentCache ? ["--persistent-cache"] : []),
+      "--host",
+      "127.0.0.1",
+      "--port",
+      port.toString(),
+    ];
+    if (this.debug) console.log("call imandra-vscode-server with args ", args);
     const sockP = waitForConnectionPromise(this.server);
     const subproc = proc.spawn(this.config.serverPath, args, { stdio: ["ignore", "pipe", "pipe"] });
     if (!subproc.pid) {
@@ -755,12 +764,13 @@ let cur: ImandraServer | null = null;
 
 export async function launch(ctx: vscode.ExtensionContext): Promise<vscode.Disposable> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
-  const config = {
+  const config: ImandraServerConfig = {
     ...defaultImandraServerConfig,
     debug: imandraConfig.get<boolean>("debug.imandra-vscode-server", false),
     serverPath: imandraConfig.get<string>("path.imandra-vscode-server", "imandra-vscode-server"),
+    persistentCache: imandraConfig.get<boolean>("dev.cache.imandra-vscode-server", false),
   };
-  console.log(`imandra.debug: ${config.debug}`);
+  console.log(`imandra.debug: ${config.debug}, persistent cache: ${config.persistentCache}`);
   const server = new ImandraServer(ctx, config);
   if (cur) cur.dispose();
   cur = server;
