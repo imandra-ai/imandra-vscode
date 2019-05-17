@@ -134,6 +134,14 @@ namespace response {
     msg: string;
   }
 
+  export interface IHint {
+    kind: "hint";
+    range: IRange;
+    uri: string;
+    version: number;
+    msg: string;
+  }
+
   export interface IAck {
     kind: "ack";
     uri: string;
@@ -157,7 +165,7 @@ namespace response {
   }
 
   /** A response from imandra */
-  export type Res = IError | IValid | IWarning | IAck | IResend | IVersion | IPong;
+  export type Res = IError | IValid | IWarning | IHint | IAck | IResend | IVersion | IPong;
 }
 
 /**
@@ -536,6 +544,18 @@ export class ImandraServerConn implements vscode.Disposable {
         if (d) {
           const r = IRangeToRange(res.range);
           const sev = vscode.DiagnosticSeverity.Warning;
+          const diag = new vscode.Diagnostic(r, res.msg, sev);
+          diag.source = "imandra";
+          d.addDiagnostic(res.version, diag);
+        }
+        return;
+      }
+      case "hint": {
+        if (this.debug) console.log(`res (v${res.version}): warning! (range ${inspect(res.range)})`);
+        const d = this.docs.get(res.uri);
+        if (d) {
+          const r = IRangeToRange(res.range);
+          const sev = vscode.DiagnosticSeverity.Information;
           const diag = new vscode.Diagnostic(r, res.msg, sev);
           diag.source = "imandra";
           d.addDiagnostic(res.version, diag);
