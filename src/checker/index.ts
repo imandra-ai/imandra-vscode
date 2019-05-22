@@ -214,7 +214,8 @@ class DocState implements vscode.Disposable {
     } else if (this.hadEditor) {
       // had an editor but not anymore: cancel any lingering computation
       this.hadEditor = false;
-      this.curDecorations = [];
+      this.curDiags.length = 0;
+      this.curDecorations.length = 0;
       if (this.debug) console.log(`send doc_cancel for ${this.uri}:${this.version}`);
       this.server.sendMsg({ kind: "doc_cancel", version: this.version, uri: this.uriStr });
     }
@@ -536,7 +537,7 @@ export class ImandraServerConn implements vscode.Disposable {
             kind: "doc_check",
             uri: key,
             version: newVersion,
-            len: d.document.getText().length,
+            len: dState.text.length,
           });
         }
       }, 300);
