@@ -108,6 +108,10 @@ namespace msg {
 
 const CUR_PROTOCOL_VERSION: string = "0.2";
 
+function strByteLen(s: string): number {
+  return Buffer.from(s).length;
+}
+
 // responses from Imandra
 namespace response {
   export interface IValid {
@@ -210,7 +214,7 @@ class DocState implements vscode.Disposable {
       this.hadEditor = true;
       this.updateDecorations();
       if (this.debug) console.log(`send doc_check for ${this.uri}:${this.version}`);
-      this.server.sendMsg({ kind: "doc_check", version: this.version, uri: this.uriStr, len: this.text.length });
+      this.server.sendMsg({ kind: "doc_check", version: this.version, uri: this.uriStr, len: strByteLen(this.text) });
     } else if (this.hadEditor) {
       // had an editor but not anymore: cancel any lingering computation
       this.hadEditor = false;
@@ -537,7 +541,7 @@ export class ImandraServerConn implements vscode.Disposable {
             kind: "doc_check",
             uri: key,
             version: newVersion,
-            len: dState.text.length,
+            len: strByteLen(dState.text),
           });
         }
       }, 300);
@@ -615,7 +619,7 @@ export class ImandraServerConn implements vscode.Disposable {
         if (d && d.version === res.version) {
           // check that length corresponds, just to be sure
           const text = d.text;
-          const expectedLen = text.length;
+          const expectedLen = strByteLen(text);
           if (expectedLen !== res.len) {
             console.log(`ack: expected len ${expectedLen}, reported len ${res.len}. Resend.`);
             this.sendDoc(d.document); // send again
