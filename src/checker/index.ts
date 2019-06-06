@@ -106,7 +106,7 @@ namespace msg {
   export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IDocCancel | IPing | "cache_sync" | "cache_clear";
 }
 
-const CUR_PROTOCOL_VERSION: string = "0.2";
+const CUR_PROTOCOL_VERSION: string = "0.3";
 
 function strByteLen(s: string): number {
   return Buffer.from(s).length;
@@ -122,24 +122,10 @@ namespace response {
     msg: string[];
   }
 
-  export interface IError {
-    kind: "error";
-    range: IRange;
-    uri: string;
-    version: number;
-    msg: string;
-  }
+  type info_kind = "error" | "warning" | "invalid" | "hint";
 
-  export interface IWarning {
-    kind: "warning";
-    range: IRange;
-    uri: string;
-    version: number;
-    msg: string;
-  }
-
-  export interface IHint {
-    kind: "hint";
+  export interface IInfo {
+    kind: info_kind;
     range: IRange;
     uri: string;
     version: number;
@@ -169,7 +155,7 @@ namespace response {
   }
 
   /** A response from imandra */
-  export type Res = IError | IValid | IWarning | IHint | IAck | IResend | IVersion | IPong;
+  export type Res = IValid | IInfo | IAck | IResend | IVersion | IPong;
 }
 
 /**
@@ -177,7 +163,8 @@ namespace response {
  */
 class DocState implements vscode.Disposable {
   private curDiags: vscode.Diagnostic[] = [];
-  private curDecorations: vscode.DecorationOptions[] = [];
+  private curDecorationsSmile: vscode.DecorationOptions[] = [];
+  private curDecorationsPuzzled: vscode.DecorationOptions[] = [];
   private curVersion: number;
   private hadEditor = false; // had an editor before last call to `clearEditor()`
   private doc: vscode.TextDocument;
@@ -199,13 +186,18 @@ class DocState implements vscode.Disposable {
   }
   public setEditor(ed: vscode.TextEditor) {
     assert(this.doc === ed.document);
-    if (this.editor) this.editor.setDecorations(this.server.decoration, []);
+    if (this.editor) {
+      this.editor.setDecorations(this.server.decorationSmile, []);
+      this.editor.setDecorations(this.server.decorationPuzzled, []);
+    }
     this.editor = ed;
-    ed.setDecorations(this.server.decoration, this.curDecorations);
+    ed.setDecorations(this.server.decorationSmile, this.curDecorationsSmile);
+    ed.setDecorations(this.server.decorationPuzzled, this.curDecorationsPuzzled);
   }
   public resetEditor() {
     if (this.editor) {
-      this.editor.setDecorations(this.server.decoration, []);
+      this.editor.setDecorations(this.server.decorationSmile, []);
+      this.editor.setDecorations(this.server.decorationPuzzled, []);
     }
     this.editor = undefined;
   }
@@ -219,7 +211,8 @@ class DocState implements vscode.Disposable {
       // had an editor but not anymore: cancel any lingering computation
       this.hadEditor = false;
       this.curDiags.length = 0;
-      this.curDecorations.length = 0;
+      this.curDecorationsSmile.length = 0;
+      this.curDecorationsPuzzled.length = 0;
       if (this.debug) console.log(`send doc_cancel for ${this.uri}:${this.version}`);
       this.server.sendMsg({ kind: "doc_cancel", version: this.version, uri: this.uriStr });
     }
@@ -243,22 +236,34 @@ class DocState implements vscode.Disposable {
       this.server.diagnostics.set(this.uri, this.curDiags);
     }
   }
-  public addDecoration(version: number, d: vscode.DecorationOptions) {
+  public addDecoration(version: number, kind: "smile" | "puzzled", d: vscode.DecorationOptions) {
     if (version === this.version && this.hasEditor) {
-      this.curDecorations.push(d);
+      switch (kind) {
+        case "smile":
+          this.curDecorationsSmile.push(d);
+          break;
+        case "puzzled":
+          this.curDecorationsPuzzled.push(d);
+          break;
+      }
       this.updateDecorations();
     }
   }
   public updateDecorations() {
-    if (this.editor) this.editor.setDecorations(this.server.decoration, this.curDecorations);
+    if (this.editor) {
+      this.editor.setDecorations(this.server.decorationSmile, this.curDecorationsSmile);
+      this.editor.setDecorations(this.server.decorationPuzzled, this.curDecorationsPuzzled);
+    }
   }
   private cleanAll() {
     // clear diagnostics and decorations
     this.curDiags.length = 0;
     this.server.diagnostics.delete(this.uri);
-    this.curDecorations.length = 0;
+    this.curDecorationsSmile.length = 0;
+    this.curDecorationsPuzzled.length = 0;
     if (this.editor) {
-      this.editor.setDecorations(this.server.decoration, []);
+      this.editor.setDecorations(this.server.decorationSmile, []);
+      this.editor.setDecorations(this.server.decorationPuzzled, []);
     }
   }
   public updateDoc(d: vscode.TextDocument) {
@@ -350,7 +355,8 @@ export class ImandraServerConn implements vscode.Disposable {
   private pingEpoch: number = 0;
   private lastPongEpoch: number = 0;
   public diagnostics: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection("imandra");
-  public decoration: vscode.TextEditorDecorationType;
+  public decorationSmile: vscode.TextEditorDecorationType;
+  public decorationPuzzled: vscode.TextEditorDecorationType;
   private procDie: vscode.EventEmitter<void> = new vscode.EventEmitter();
 
   public get debug(): boolean {
@@ -418,14 +424,16 @@ export class ImandraServerConn implements vscode.Disposable {
   public constructor(config: ImandraServerConfig, ctx: vscode.ExtensionContext) {
     this.config = config;
     this.server = net.createServer();
-    const decoStyle: vscode.DecorationRenderOptions = {
-      //backgroundColor: new vscode.ThemeColor("editor.wordHighlightBackground"),
-      overviewRulerColor: "green",
-      gutterIconPath: ctx.asAbsolutePath(path.join("assets", "imandra-smile.png")),
-      gutterIconSize: "70%",
-      outlineColor: "green",
-    };
-    this.decoration = vscode.window.createTextEditorDecorationType(decoStyle);
+    const decoStyle = (iPath: string, color: string) =>
+      vscode.window.createTextEditorDecorationType({
+        //backgroundColor: new vscode.ThemeColor("editor.wordHighlightBackground"),
+        overviewRulerColor: color,
+        gutterIconPath: ctx.asAbsolutePath(path.join("assets", iPath)),
+        gutterIconSize: "70%",
+        outlineColor: "green",
+      });
+    this.decorationSmile = decoStyle("imandra-smile.png", "green");
+    this.decorationPuzzled = decoStyle("imandra-wut.png", "orange");
   }
 
   public dispose() {
@@ -572,7 +580,20 @@ export class ImandraServerConn implements vscode.Disposable {
             range: r,
             hoverMessage: res.msg,
           };
-          d.addDecoration(res.version, deco);
+          d.addDecoration(res.version, "smile", deco);
+        }
+        return;
+      }
+      case "invalid": {
+        if (this.debug) console.log(`res (v${res.version}): invalid! (range ${inspect(res.range)})`);
+        const d = this.docs.get(res.uri);
+        if (d) {
+          const r = IRangeToRange(res.range);
+          const deco = {
+            range: r,
+            hoverMessage: res.msg,
+          };
+          d.addDecoration(res.version, "puzzled", deco);
         }
         return;
       }
