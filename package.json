@@ -109,10 +109,10 @@
           "default": "env",
           "description": "The path to the `env` command which prints the language server environment for debugging editor issues."
         },
-        "imandra.path.ocamlmerlin": {
+        "imandra.path.imandra_merlin": {
           "type": "string",
-          "default": "ocamlmerlin",
-          "description": "The path to the `ocamlmerlin` binary."
+          "default": "imandra-merlin",
+          "description": "The path to the `imandra-merlin` binary."
         },
         "imandra.path.ocpindent": {
           "type": "string",
@@ -164,31 +164,6 @@
           "maxItems": 2,
           "uniqueItems": true,
           "description": "The list of languages enable support for in the language server."
-        },
-        "imandra.path.ocamlmerlinArgs": {
-          "type": "array",
-          "default": [
-            "-addsuffix",
-            ".iml:.imli",
-            "-addsuffix",
-            ".ire:.irei",
-            "-open",
-            "Imandra_prelude",
-            "-assocsuffix",
-            ".iml:imandra",
-            "-assocsuffix",
-            ".imli:imandra",
-            "-assocsuffix",
-            ".ire:imandra-reason",
-            "-assocsuffix",
-            ".irei:imandra-reason",
-            "-package",
-            "imandra-prelude",
-            "-package",
-            "zarith"
-          ],
-          "uniqueItems": false,
-          "description": "Merlin flags and arguments to be passed."
         }
       }
     },
