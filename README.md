@@ -2,7 +2,7 @@
 
 Imandra is both a programming language and a reasoning engine with which you can analyse and verify properties of your programs. This VSCode plugin allows you to develop files which can be analysed by Imandra, and also incorporates a specific merlin extension which provides information on underlying types and completions.
 
-## System requirements
+## System requirements
 
 It is necessary that the Imandra installation instructions are followed in order for the asynchronous verification, and integration with Imandra-specific merlin to function properly. All the components required are installed automatically by following the instructions provided [here](https://docs.imandra.ai/imandra-docs-dev/notebooks/installation/).
 
