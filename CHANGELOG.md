@@ -1,4 +1,8 @@
 
+## 0.3.1
+
+Correcting capitalisation in README.
+
 ## 0.3.0
 
 Interfacing with imandra-vscode-server to check documents interactively.
