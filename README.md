@@ -1,20 +1,28 @@
 # Imandra IDE
 
-Imandra is both a programming language and a reasoning engine with which you can analyse and verify properties of your programs. This VSCode plugin allows you to develop files which can be analysed by imandra, and incorporates a specific merlin extension which provides information on underlying types and completions.
-
-In order to learn more about imandra, please visit the interactive [documentation pages](https://docs.imandra.ai/imandra-docs/).
+Imandra is both a programming language and a reasoning engine with which you can analyse and verify properties of your programs. This VSCode plugin allows you to develop files which can be analysed by imandra, and also incorporates a specific merlin extension which provides information on underlying types and completions.
 
 ## System requirements
 
-It is necessary that you have the executables `ocamlmerlin` and `ocamlmerlin-imandra` installed on your system. All the imandra-specific components required are installed automatically by following the instructions provided [here](https://docs.imandra.ai/imandra-docs-dev/notebooks/installation/).If installed using [opam](https://opam.ocaml.org/) - the OCaml package manager - the switch detected by VSCode will be the same as if using opam from the directory which corresponds to your workspace root. For example - if you open a directory `~/my_imandra_project/` which has a local switch then the switch in which `merlin` and `ocp-indent` is executed will be this local switch. If no local switch exists, then the default global switch will be used.
+It is necessary that the imandra installation instructions are followed in order for the asynchronous verification, and integration with imandra-specific merlin to function properly. All the components required are installed automatically by following the instructions provided [here](https://docs.imandra.ai/imandra-docs-dev/notebooks/installation/).
 
-Alternatively you can use systems such as [esy](https://esy.sh/) with which you can configure the installation of executables such as `merlin` and `ocp-indent`.
-
-In order for the `ocp-indent`, `ocamlfind` and `refmt` commands to work (for example on automatic code-formatting), these must be installed either globally or on the local switch.
+In order for the `ocp-indent`, `ocamlfind` and `refmt` commands to work (for example on automatic code-formatting), these must be installed globally on the system.
 
 ## Functionality
 
-This VSCode extension builds on the existing excellent [OCaml and Reason IDE](https://marketplace.visualstudio.com/items?itemName=freebroccolo.reasonml) for Reason and OCaml files. It provides a mirror of the environment variables for each of the possible commands, and code actions function exactly the same as from this repository.
+This plugin provides both an interface to the imandra reasoning engine, and also to the merlin type checker and development environment, specific to imandra's .iml and .ire file format.
+
+Please see the [documentation](https://docs.imandra.ai/imandra-docs/) to learn more about how to write verification goals and perform counter-example checking in imandra. 
+
+### Asynchronous verification with imandra
+
+As an imandra file is edited, the plugin communicates with imandra and updates the status of definitions, verification goals and bounded model-checking statements. Statements which are admissible receive a green imandra icon in the left margin, and those that fail either receive a red imandra icon - in the case of an unverfiable goal, or an instance not being found. An error is displayed for statements which are inadmissible by imandra, such as those which cannot be shown to be terminating, or which are declared as theorems but cannot be proved. Please view the below gifs as examples of the plugin in use.
+
+![](https://storage.googleapis.com/imandra-assets/images/github/VS_code_documentation_gif/vscodeV1.gif)
+
+![](https://storage.googleapis.com/imandra-assets/images/github/VS_code_documentation_gif/vscodeV2.gif)
+
+![](https://storage.googleapis.com/imandra-assets/images/github/VS_code_documentation_gif/vscodeV3.gif)
 
 ### Syntax highlighting
 
@@ -22,7 +30,7 @@ This extension provides a syntax highlighter is provided for imandra files with 
 
 ### Merlin functionality
 
-By default, merlin uses specific readers to analyse `imandra` and `imandra-reason` files.
+The merlin integration for this VSCode extension builds on the existing excellent [OCaml and Reason IDE](https://marketplace.visualstudio.com/items?itemName=freebroccolo.reasonml) for Reason and OCaml files. It provides a mirror of the environment variables for each of the possible commands, and code actions function exactly the same as from this repository. By default, merlin uses specific readers to analyse `imandra` and `imandra-reason` files.
 
 At present the `imandra` and `imandra-reason` reader extensions for merlin provide:
 
