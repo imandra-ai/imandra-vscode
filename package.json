@@ -114,6 +114,21 @@
           "default": "imandra-merlin",
           "description": "The path to the `imandra-merlin` binary."
         },
+        "imandra.path.imandra-vscode-server": {
+          "type": "string",
+          "default": "imandra-vscode-server",
+          "description": "The path to the `imandra-vscode-server` binary."
+        },
+        "imandra.dev.cache.imandra-vscode-server": {
+          "type": "boolean",
+          "default": "false",
+          "description": "Enable local persistent cache for the imandra server."
+        },
+        "imandra.debug.imandra-vscode-server": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug messages for imandra-vscode-server"
+        },
         "imandra.path.ocpindent": {
           "type": "string",
           "default": "ocp-indent",
@@ -243,8 +258,20 @@
     ],
     "commands": [
       {
-        "command": "imandra.reload",
-        "title": "Imandra: reload plugin"
+        "command": "imandra.merlin.reload",
+        "title": "Imandra: reload Merlin plugin"
+      },
+      {
+        "command": "imandra.server.reload",
+        "title": "Imandra: reload semantic server"
+      },
+      {
+        "command": "imandra.server.cache.sync",
+        "title": "Imandra: synchronize cache to disk"
+      },
+      {
+        "command": "imandra.server.cache.clear",
+        "title": "Imandra: clear cache"
       }
     ]
   },

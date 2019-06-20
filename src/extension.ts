@@ -2,6 +2,7 @@
 
 import * as vscode from "vscode";
 import * as client from "./client";
+import * as checker from "./checker";
 
 const imandraConfiguration = {
   indentationRules: {
@@ -90,11 +91,13 @@ const imandraConfiguration = {
   wordPattern: /\\[^\s]+|[^\\\s\d(){}\[\]#.][^\\\s(){}\[\]#.]*/,
 };
 
-export async function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
   context.subscriptions.push(vscode.languages.setLanguageConfiguration("imandra", imandraConfiguration));
-  await client.launch(context);
+  const ps = await Promise.all([client.launch(context), checker.launch(context)]);
+  return vscode.Disposable.from(...ps);
 }
 
-export function deactivate() {
-  return;
+export async function deactivate(): Promise<void> {
+  console.log("deactivate");
+  await checker.deactivate();
 }

@@ -1,3 +1,8 @@
+
+## 0.3.0
+
+Interfacing with imandra-vscode-server to check documents interactively.
+
 ## 0.2.9
 
 Updating assocsuffix syntax to be in line with the new merlin.
