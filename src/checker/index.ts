@@ -106,7 +106,7 @@ namespace msg {
   export type Msg = IDocAdd | IDocRemove | IDocUpdate | IDocCheck | IDocCancel | IPing | "cache_sync" | "cache_clear";
 }
 
-const CUR_PROTOCOL_VERSION: string = "0.3";
+const CUR_PROTOCOL_VERSION: string = "0.4";
 
 function strByteLen(s: string): number {
   return Buffer.from(s).length;
@@ -154,8 +154,13 @@ namespace response {
     v: string; // current version number for the protocole
   }
 
+  export interface IProgress {
+    kind: "progress";
+    epoch: number;
+  }
+
   /** A response from imandra */
-  export type Res = IValid | IInfo | IAck | IResend | IVersion | IPong;
+  export type Res = IValid | IInfo | IAck | IResend | IVersion | IPong | IProgress;
 }
 
 /**
@@ -339,6 +344,9 @@ class LineBuffer {
   }
 }
 
+// progress bar
+const PROGRESS: string[] = ["\\", "|", "/", "-"];
+
 /**
  * A connection to imandra-vscode-server, as well as the current
  * set of active documents/editors
@@ -351,7 +359,8 @@ export class ImandraServerConn implements vscode.Disposable {
   private subproc: undefined | proc.ChildProcess; // connection to imandra server
   private server: net.Server; // listen for a connection from imandra
   private docs: Map<string, DocState> = new Map(); // set of active docs, by their uri string
-  private subscriptions: vscode.Disposable[] = [];
+  private progress = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+  private subscriptions: vscode.Disposable[] = [this.progress];
   private pingEpoch: number = 0;
   private lastPongEpoch: number = 0;
   public diagnostics: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection("imandra");
@@ -423,6 +432,7 @@ export class ImandraServerConn implements vscode.Disposable {
 
   public constructor(config: ImandraServerConfig, ctx: vscode.ExtensionContext) {
     this.config = config;
+    this.clearProgress();
     this.server = net.createServer();
     const decoStyle = (iPath: string, color: string) =>
       vscode.window.createTextEditorDecorationType({
@@ -441,6 +451,7 @@ export class ImandraServerConn implements vscode.Disposable {
     this.subscriptions.length = 0;
     this.docs.forEach((d, _) => d.dispose());
     this.diagnostics.clear();
+    this.progress.dispose();
     // idempotent disposal
     if (this.st !== state.Disposed) {
       console.log("disconnecting imandra-vscode-server…");
@@ -451,7 +462,7 @@ export class ImandraServerConn implements vscode.Disposable {
         setTimeout(() => {
           try {
             subproc.kill();
-          } catch (_) {}
+          } catch (_) { }
         }, 800);
       }
       this.subproc = undefined;
@@ -568,10 +579,21 @@ export class ImandraServerConn implements vscode.Disposable {
     this.docs.forEach((d, _) => d.updateEditor());
   }
 
+  private setProgress(epoch: number) {
+    const bar = PROGRESS[epoch % PROGRESS.length];
+    this.progress.text = `[${bar}]`;
+    this.progress.show();
+  }
+
+  private clearProgress() {
+    this.progress.text = "[ ]";
+  }
+
   // handle messages from imandra-vscode
   private async handleRes(res: response.Res) {
     switch (res.kind) {
       case "valid": {
+        this.clearProgress();
         if (this.debug) console.log(`res (v${res.version}): valid! (range ${inspect(res.range)})`);
         const d = this.docs.get(res.uri);
         if (d) {
@@ -585,6 +607,7 @@ export class ImandraServerConn implements vscode.Disposable {
         return;
       }
       case "invalid": {
+        this.clearProgress();
         if (this.debug) console.log(`res (v${res.version}): invalid! (range ${inspect(res.range)})`);
         const d = this.docs.get(res.uri);
         if (d) {
@@ -598,6 +621,7 @@ export class ImandraServerConn implements vscode.Disposable {
         return;
       }
       case "error": {
+        this.clearProgress();
         if (this.debug) console.log(`res (v${res.version}): error! (range ${inspect(res.range)})`);
         const d = this.docs.get(res.uri);
         if (d) {
@@ -610,6 +634,7 @@ export class ImandraServerConn implements vscode.Disposable {
         return;
       }
       case "warning": {
+        this.clearProgress();
         if (this.debug) console.log(`res (v${res.version}): warning! (range ${inspect(res.range)})`);
         const d = this.docs.get(res.uri);
         if (d) {
@@ -622,6 +647,7 @@ export class ImandraServerConn implements vscode.Disposable {
         return;
       }
       case "hint": {
+        this.clearProgress();
         if (this.debug) console.log(`res (v${res.version}): warning! (range ${inspect(res.range)})`);
         const d = this.docs.get(res.uri);
         if (d) {
@@ -677,6 +703,10 @@ export class ImandraServerConn implements vscode.Disposable {
           console.log(`error: imandra-server has version ${res.v}, not ${CUR_PROTOCOL_VERSION} as expected`);
           this.dispose();
         }
+        return;
+      }
+      case "progress": {
+        this.setProgress(res.epoch);
         return;
       }
       default: {
@@ -765,7 +795,7 @@ export class ImandraServer implements vscode.Disposable {
       console.log("send `sync` message");
       try {
         await this.conn.sendMsg("cache_sync");
-      } catch {}
+      } catch { }
     }
   }
 
