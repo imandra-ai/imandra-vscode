@@ -157,6 +157,7 @@ namespace response {
   export interface IProgress {
     kind: "progress";
     epoch: number;
+    timeElapsed: number | undefined;
   }
 
   /** A response from imandra */
@@ -462,7 +463,7 @@ export class ImandraServerConn implements vscode.Disposable {
         setTimeout(() => {
           try {
             subproc.kill();
-          } catch (_) { }
+          } catch (_) {}
         }, 800);
       }
       this.subproc = undefined;
@@ -579,9 +580,10 @@ export class ImandraServerConn implements vscode.Disposable {
     this.docs.forEach((d, _) => d.updateEditor());
   }
 
-  private setProgress(epoch: number) {
+  private setProgress(epoch: number, timeElapsed?: number) {
     const bar = PROGRESS[epoch % PROGRESS.length];
-    this.progress.text = `[${bar}]`;
+    const timeSince = timeElapsed === undefined ? "" : ` ${Math.round(timeElapsed * 100) / 100}s`;
+    this.progress.text = `[${bar}${timeSince}]`;
     this.progress.show();
   }
 
@@ -706,7 +708,7 @@ export class ImandraServerConn implements vscode.Disposable {
         return;
       }
       case "progress": {
-        this.setProgress(res.epoch);
+        this.setProgress(res.epoch, res.timeElapsed);
         return;
       }
       default: {
@@ -795,7 +797,7 @@ export class ImandraServer implements vscode.Disposable {
       console.log("send `sync` message");
       try {
         await this.conn.sendMsg("cache_sync");
-      } catch { }
+      } catch {}
     }
   }
 
