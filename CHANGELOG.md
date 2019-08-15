@@ -1,3 +1,6 @@
+## 0.4.0
+
+Display progress bar for verification goals.
 
 ## 0.3.1
 
