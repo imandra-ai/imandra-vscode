@@ -348,6 +348,13 @@ class LineBuffer {
 // progress bar
 const PROGRESS: string[] = ["\\", "|", "/", "-"];
 
+class WrongVersion {
+  public imandraVer: string;
+  constructor(v: string) {
+    this.imandraVer = v;
+  }
+}
+
 /**
  * A connection to imandra-vscode-server, as well as the current
  * set of active documents/editors
@@ -364,11 +371,10 @@ export class ImandraServerConn implements vscode.Disposable {
   private subscriptions: vscode.Disposable[] = [this.progress];
   private pingEpoch: number = 0;
   private lastPongEpoch: number = 0;
-  public imandraProtocolVersion: string = CUR_PROTOCOL_VERSION;
   public diagnostics: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection("imandra");
   public decorationSmile: vscode.TextEditorDecorationType;
   public decorationPuzzled: vscode.TextEditorDecorationType;
-  private procDie: vscode.EventEmitter<void> = new vscode.EventEmitter();
+  private procDie: vscode.EventEmitter<WrongVersion | undefined> = new vscode.EventEmitter();
 
   public get debug(): boolean {
     return this.config.debug;
@@ -428,7 +434,7 @@ export class ImandraServerConn implements vscode.Disposable {
   }
 
   /// Triggered when the subprocess died
-  public get onProcDied(): vscode.Event<void> {
+  public get onProcDied(): vscode.Event<WrongVersion | undefined> {
     return this.procDie.event;
   }
 
@@ -448,7 +454,7 @@ export class ImandraServerConn implements vscode.Disposable {
     this.decorationPuzzled = decoStyle("imandra-wut.png", "orange");
   }
 
-  public dispose() {
+  public dispose(reason?: WrongVersion) {
     this.subscriptions.forEach(x => x.dispose());
     this.subscriptions.length = 0;
     this.docs.forEach((d, _) => d.dispose());
@@ -470,7 +476,7 @@ export class ImandraServerConn implements vscode.Disposable {
       this.subproc = undefined;
 
       this.server.close();
-      this.procDie.fire(); // notify
+      this.procDie.fire(reason); // notify
     }
   }
 
@@ -702,10 +708,9 @@ export class ImandraServerConn implements vscode.Disposable {
         return;
       }
       case "version": {
-        this.imandraProtocolVersion = res.v;
         if (res.v !== CUR_PROTOCOL_VERSION) {
           console.log(`error: imandra-server has version ${res.v}, not ${CUR_PROTOCOL_VERSION} as expected`);
-          this.dispose();
+          this.dispose(new WrongVersion(res.v));
         }
         return;
       }
@@ -782,17 +787,15 @@ export class ImandraServer implements vscode.Disposable {
   private status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
   private subscriptions: vscode.Disposable[] = [];
 
-  private setStatus(ok: boolean) {
+  private setStatus(ok: boolean, reason?: WrongVersion) {
     if (ok) {
       this.status.text = "[imandra-server: active ✔]";
       this.status.tooltip = "Connection to imandra-vscode-server established";
       this.status.command = "imandra.server.reload";
-    } else if (this.conn !== undefined && this.conn.imandraProtocolVersion !== CUR_PROTOCOL_VERSION) {
+    } else if (reason) {
       this.nRestarts = MAX_RESTARTS; // can't restart
       this.status.text = "[imandra-server: wrong version]";
-      this.status.tooltip = `make sure the imandra-vscode-server is compatible (expected ${CUR_PROTOCOL_VERSION}, got ${
-        this.conn.imandraProtocolVersion
-      })`;
+      this.status.tooltip = `make sure the imandra-vscode-server is compatible (expected ${CUR_PROTOCOL_VERSION}, got ${reason})`;
     } else {
       this.status.text = "[imandra-server: dead ×]";
       this.status.tooltip = `Lost connection to imandra-vscode-server (${this.nRestarts} restarts)`;
@@ -831,9 +834,9 @@ export class ImandraServer implements vscode.Disposable {
       return;
     }
     this.conn = new ImandraServerConn(this.config, this.ctx);
-    this.conn.onProcDied(() => {
+    this.conn.onProcDied((reason: WrongVersion | undefined) => {
       this.conn = undefined;
-      this.setStatus(false);
+      this.setStatus(false, reason);
       this.nRestarts++;
 
       // try to restart in a little while
