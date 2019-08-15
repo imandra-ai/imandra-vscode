@@ -364,6 +364,7 @@ export class ImandraServerConn implements vscode.Disposable {
   private subscriptions: vscode.Disposable[] = [this.progress];
   private pingEpoch: number = 0;
   private lastPongEpoch: number = 0;
+  public imandraProtocolVersion: string = CUR_PROTOCOL_VERSION;
   public diagnostics: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection("imandra");
   public decorationSmile: vscode.TextEditorDecorationType;
   public decorationPuzzled: vscode.TextEditorDecorationType;
@@ -701,6 +702,7 @@ export class ImandraServerConn implements vscode.Disposable {
         return;
       }
       case "version": {
+        this.imandraProtocolVersion = res.v;
         if (res.v !== CUR_PROTOCOL_VERSION) {
           console.log(`error: imandra-server has version ${res.v}, not ${CUR_PROTOCOL_VERSION} as expected`);
           this.dispose();
@@ -785,6 +787,12 @@ export class ImandraServer implements vscode.Disposable {
       this.status.text = "[imandra-server: active ✔]";
       this.status.tooltip = "Connection to imandra-vscode-server established";
       this.status.command = "imandra.server.reload";
+    } else if (this.conn !== undefined && this.conn.imandraProtocolVersion !== CUR_PROTOCOL_VERSION) {
+      this.nRestarts = MAX_RESTARTS; // can't restart
+      this.status.text = "[imandra-server: wrong version]";
+      this.status.tooltip = `make sure the imandra-vscode-server is compatible (expected ${CUR_PROTOCOL_VERSION}, got ${
+        this.conn.imandraProtocolVersion
+      })`;
     } else {
       this.status.text = "[imandra-server: dead ×]";
       this.status.tooltip = `Lost connection to imandra-vscode-server (${this.nRestarts} restarts)`;
