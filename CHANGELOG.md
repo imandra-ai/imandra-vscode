@@ -1,3 +1,8 @@
+## 0.4.1
+
+Add option to enable or disable auto-updating the server.
+Add command to disconnect semantic server.
+
 ## 0.4.0
 
 Display progress bar for verification goals.

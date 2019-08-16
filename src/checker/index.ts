@@ -8,6 +8,8 @@ import * as assert from "assert";
 import * as path from "path";
 import * as crypto from "crypto";
 
+let connectionForcedClosed: boolean = false;
+
 enum state {
   Start,
   Connecting,
@@ -295,12 +297,14 @@ export interface ImandraServerConfig {
   debug: boolean;
   serverPath: string;
   persistentCache: boolean;
+  autoUpdate: boolean;
 }
 
 export const defaultImandraServerConfig: ImandraServerConfig = {
   serverPath: "imandra-vscode-server",
   debug: false,
   persistentCache: false,
+  autoUpdate: true,
 };
 
 /**
@@ -408,8 +412,10 @@ export class ImandraServerConn implements vscode.Disposable {
         const line = this.buffer.getLine().trim();
         if (line === "") continue;
         try {
-          const res = JSON.parse(line) as response.Res;
-          this.handleRes(res);
+          if (!connectionForcedClosed) {
+            const res = JSON.parse(line) as response.Res;
+            this.handleRes(res);
+          }
         } catch (e) {
           console.log(`ERROR: could not parse message's line "${line}" as json`);
         }
@@ -711,6 +717,7 @@ export class ImandraServerConn implements vscode.Disposable {
         if (res.v !== CUR_PROTOCOL_VERSION) {
           console.log(`error: imandra-server has version ${res.v}, not ${CUR_PROTOCOL_VERSION} as expected`);
           this.dispose(new WrongVersion(res.v));
+          connectionForcedClosed = true;
         }
         return;
       }
@@ -735,6 +742,7 @@ export class ImandraServerConn implements vscode.Disposable {
     const args = [
       ...(this.debug ? ["-d", "4"] : []),
       ...(this.config.persistentCache ? ["--persistent-cache"] : []),
+      ...(this.config.autoUpdate ? [] : ["--skip-update"]),
       "--host",
       "127.0.0.1",
       "--port",
@@ -819,9 +827,20 @@ export class ImandraServer implements vscode.Disposable {
       this.conn.dispose();
       this.conn = undefined;
     }
+    connectionForcedClosed = false;
     this.nRestarts = 0;
     this.setStatus(false);
     this.setupConn();
+  }
+
+  // disconnect the server
+  private disconnectConn() {
+    if (this.conn) {
+      this.trySync();
+      this.conn.dispose();
+      this.conn = undefined;
+      connectionForcedClosed = true;
+    }
   }
 
   private setupConn() {
@@ -838,12 +857,13 @@ export class ImandraServer implements vscode.Disposable {
       this.conn = undefined;
       this.setStatus(false, reason);
       this.nRestarts++;
-
-      // try to restart in a little while
-      setTimeout(() => {
-        console.log("try to restart imandra-vscode-server");
-        this.setupConn();
-      }, 5 * 1000);
+      if (reason === undefined) {
+        // try to restart in a little while
+        setTimeout(() => {
+          console.log("try to restart imandra-vscode-server");
+          this.setupConn();
+        }, 5 * 1000);
+      }
     });
     // now start the connection
     this.conn.init(ok => {
@@ -871,6 +891,10 @@ export class ImandraServer implements vscode.Disposable {
       vscode.commands.registerCommand("imandra.server.cache.sync", () => {
         console.log("imandra.server.cache.sync called");
         if (this.conn) this.conn.sendMsg("cache_sync");
+      }),
+      vscode.commands.registerCommand("imandra.server.diconnect", () => {
+        console.log("imandra.server.diconnect called");
+        this.disconnectConn();
       }),
     );
     this.setupConn();
@@ -903,8 +927,11 @@ export async function launch(ctx: vscode.ExtensionContext): Promise<vscode.Dispo
     debug: imandraConfig.get<boolean>("debug.imandra-vscode-server", false),
     serverPath: imandraConfig.get<string>("path.imandra-vscode-server", "imandra-vscode-server"),
     persistentCache: imandraConfig.get<boolean>("dev.cache.imandra-vscode-server", false),
+    autoUpdate: imandraConfig.get<boolean>("debug.auto-update-server", true),
   };
-  console.log(`imandra.debug: ${config.debug}, persistent cache: ${config.persistentCache}`);
+  console.log(
+    `imandra.debug: ${config.debug}, persistent cache: ${config.persistentCache}, auto update: ${config.autoUpdate}`,
+  );
   const server = new ImandraServer(ctx, config);
   if (cur) cur.dispose();
   cur = server;

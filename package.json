@@ -3,7 +3,7 @@
   "name": "iml-vscode",
   "displayName": "Imandra IDE",
   "description": "Imandra (ReasonML/OCaml) reasoning studio",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "publisher": "aestheticintegration",
   "bugs": {
     "url": "https://github.com/aestheticintegration/iml-vscode/issues"
@@ -128,6 +128,11 @@
           "type": "boolean",
           "default": false,
           "description": "Enable debug messages for imandra-vscode-server"
+        },
+        "imandra.debug.auto-update-server": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable auto-updating of imandra-vscode-server"
         },
         "imandra.path.ocpindent": {
           "type": "string",
@@ -272,6 +277,10 @@
       {
         "command": "imandra.server.cache.clear",
         "title": "Imandra: clear cache"
+      },
+      {
+        "command": "imandra.server.diconnect",
+        "title": "Imandra: disconnect server"
       }
     ]
   },
