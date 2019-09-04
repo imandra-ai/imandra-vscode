@@ -3,7 +3,7 @@
   "name": "iml-vscode",
   "displayName": "Imandra IDE",
   "description": "Imandra (ReasonML/OCaml) reasoning studio",
-  "version": "0.4.1",
+  "version": "0.4.3",
   "publisher": "aestheticintegration",
   "bugs": {
     "url": "https://github.com/aestheticintegration/iml-vscode/issues"
@@ -28,10 +28,10 @@
     "reasonml"
   ],
   "galleryBanner": {
-    "color": "#1BABA5",
+    "color": "#2a84f9",
     "theme": "dark"
   },
-  "icon": "assets/logo.png",
+  "icon": "assets/vscode-imandra-avatar.png",
   "activationEvents": [
     "onLanguage:imandra",
     "onLanguage:imandra-reason"
