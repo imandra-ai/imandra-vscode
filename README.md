@@ -10,7 +10,7 @@ In order for the `ocp-indent`, `ocamlfind` and `refmt` commands to work (for exa
 
 ## Functionality
 
-This plugin provides both an interface to the Imandra reasoning engine, and also to the merlin type checker and development environment, specific to Imandra's .iml and .ire file format.
+This plugin provides both an interface to the Imandra reasoning engine, and also to the merlin type checker and development environment, specific to Imandra's `.iml` and `.ire` file formats.
 
 Please see the [documentation](https://docs.imandra.ai/imandra-docs/) to learn more about how to write verification goals and perform counter-example checking in Imandra.
 
