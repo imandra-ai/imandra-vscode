@@ -1,3 +1,11 @@
+## 0.4.3
+
+Updating README with correct icon and colour scheme.
+
+## 0.4.2
+
+Removing erroneous error thrown on warned opening comment (*).
+
 ## 0.4.1
 
 Add option to enable or disable auto-updating the server.
