@@ -476,7 +476,7 @@ export class ImandraServerConn implements vscode.Disposable {
         setTimeout(() => {
           try {
             subproc.kill();
-          } catch (_) {}
+          } catch (_) { }
         }, 800);
       }
       this.subproc = undefined;
@@ -756,10 +756,12 @@ export class ImandraServerConn implements vscode.Disposable {
       this.dispose();
       return;
     }
-    if (this.debug) {
-      subproc.stderr.on("data", msg => console.log(`imandra.stderr: ${msg}`));
-      subproc.stdout.on("data", msg => console.log(`imandra.stdout: ${msg}`));
-    }
+    subproc.stderr.on("data", msg => {
+      if (this.debug) console.log(`imandra.stderr: ${msg}`);
+    });
+    subproc.stdout.on("data", msg => {
+      if (this.debug) console.log(`imandra.stdout: ${msg}`);
+    });
     console.log(`waiting for connection (pid: ${subproc.pid})...`);
     const sock = await sockP;
     console.log("got connection!");
@@ -816,7 +818,7 @@ export class ImandraServer implements vscode.Disposable {
       console.log("send `sync` message");
       try {
         await this.conn.sendMsg("cache_sync");
-      } catch {}
+      } catch { }
     }
   }
 
