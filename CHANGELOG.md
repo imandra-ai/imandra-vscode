@@ -1,3 +1,7 @@
+## 0.4.4
+
+Multifile stdout hanging fix for macOS systems.
+
 ## 0.4.3
 
 Updating README with correct icon and colour scheme.
