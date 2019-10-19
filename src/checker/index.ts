@@ -359,6 +359,8 @@ class WrongVersion {
   }
 }
 
+class ForceClosed {}
+
 /**
  * A connection to imandra-vscode-server, as well as the current
  * set of active documents/editors
@@ -378,7 +380,7 @@ export class ImandraServerConn implements vscode.Disposable {
   public diagnostics: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection("imandra");
   public decorationSmile: vscode.TextEditorDecorationType;
   public decorationPuzzled: vscode.TextEditorDecorationType;
-  private procDie: vscode.EventEmitter<WrongVersion | undefined> = new vscode.EventEmitter();
+  private procDie: vscode.EventEmitter<WrongVersion | ForceClosed | undefined> = new vscode.EventEmitter();
 
   public get debug(): boolean {
     return this.config.debug;
@@ -440,7 +442,7 @@ export class ImandraServerConn implements vscode.Disposable {
   }
 
   /// Triggered when the subprocess died
-  public get onProcDied(): vscode.Event<WrongVersion | undefined> {
+  public get onProcDied(): vscode.Event<WrongVersion | ForceClosed | undefined> {
     return this.procDie.event;
   }
 
@@ -460,7 +462,7 @@ export class ImandraServerConn implements vscode.Disposable {
     this.decorationPuzzled = decoStyle("imandra-wut.png", "orange");
   }
 
-  public dispose(reason?: WrongVersion) {
+  public dispose(reason?: WrongVersion | ForceClosed) {
     this.subscriptions.forEach(x => x.dispose());
     this.subscriptions.length = 0;
     this.docs.forEach((d, _) => d.dispose());
@@ -797,15 +799,18 @@ export class ImandraServer implements vscode.Disposable {
   private status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
   private subscriptions: vscode.Disposable[] = [];
 
-  private setStatus(ok: boolean, reason?: WrongVersion) {
+  private setStatus(ok: boolean, reason?: WrongVersion | ForceClosed) {
     if (ok) {
       this.status.text = "[imandra-server: active ✔]";
       this.status.tooltip = "Connection to imandra-vscode-server established";
       this.status.command = "imandra.server.reload";
-    } else if (reason) {
+    } else if (reason === WrongVersion) {
       this.nRestarts = MAX_RESTARTS; // can't restart
       this.status.text = "[imandra-server: wrong version]";
       this.status.tooltip = `make sure the imandra-vscode-server is compatible (expected ${CUR_PROTOCOL_VERSION}, got ${reason})`;
+    } else if (reason === ForceClosed) {
+      this.status.text = "[imandra-server: force closed]";
+      this.status.tooltip = `restart with command: "Imandra: reload semantic server"`;
     } else {
       this.status.text = "[imandra-server: dead ×]";
       this.status.tooltip = `Lost connection to imandra-vscode-server (${this.nRestarts} restarts)`;
@@ -829,7 +834,6 @@ export class ImandraServer implements vscode.Disposable {
       this.conn.dispose();
       this.conn = undefined;
     }
-    connectionForcedClosed = false;
     this.nRestarts = 0;
     this.setStatus(false);
     this.setupConn();
@@ -839,10 +843,9 @@ export class ImandraServer implements vscode.Disposable {
   private disconnectConn() {
     if (this.conn) {
       this.trySync();
-      connectionForcedClosed = true;
-      this.conn.dispose();
+      this.conn.dispose(ForceClosed);
       this.conn = undefined;
-      this.setStatus(false, undefined);
+      this.setStatus(false, ForceClosed);
     }
   }
 
@@ -856,8 +859,8 @@ export class ImandraServer implements vscode.Disposable {
       return;
     }
     this.conn = new ImandraServerConn(this.config, this.ctx);
-    this.conn.onProcDied((reason: WrongVersion | undefined) => {
-      if (!connectionForcedClosed) {
+    this.conn.onProcDied((reason: WrongVersion | ForceClosed | undefined) => {
+      if (!(reason === ForceClosed)) {
         this.conn = undefined;
         this.setStatus(false, reason);
         this.nRestarts++;
