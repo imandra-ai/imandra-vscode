@@ -8,8 +8,6 @@ import * as assert from "assert";
 import * as path from "path";
 import * as crypto from "crypto";
 
-let connectionForcedClosed: boolean = false;
-
 enum state {
   Start,
   Connecting,
@@ -414,10 +412,8 @@ export class ImandraServerConn implements vscode.Disposable {
         const line = this.buffer.getLine().trim();
         if (line === "") continue;
         try {
-          if (!connectionForcedClosed) {
-            const res = JSON.parse(line) as response.Res;
-            this.handleRes(res);
-          }
+          const res = JSON.parse(line) as response.Res;
+          this.handleRes(res);
         } catch (e) {
           console.log(`ERROR: could not parse message's line "${line}" as json`);
         }
@@ -719,7 +715,6 @@ export class ImandraServerConn implements vscode.Disposable {
         if (res.v !== CUR_PROTOCOL_VERSION) {
           console.log(`error: imandra-server has version ${res.v}, not ${CUR_PROTOCOL_VERSION} as expected`);
           this.dispose(new WrongVersion(res.v));
-          connectionForcedClosed = true;
         }
         return;
       }
