@@ -1,3 +1,7 @@
+## 0.4.5
+
+Allowing explicit disconnection to the Imandra Semantic Server.
+
 ## 0.4.4
 
 Multifile stdout hanging fix for macOS systems.

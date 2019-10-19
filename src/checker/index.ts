@@ -476,7 +476,7 @@ export class ImandraServerConn implements vscode.Disposable {
         setTimeout(() => {
           try {
             subproc.kill();
-          } catch (_) { }
+          } catch (_) {}
         }, 800);
       }
       this.subproc = undefined;
@@ -818,7 +818,7 @@ export class ImandraServer implements vscode.Disposable {
       console.log("send `sync` message");
       try {
         await this.conn.sendMsg("cache_sync");
-      } catch { }
+      } catch {}
     }
   }
 
@@ -839,9 +839,10 @@ export class ImandraServer implements vscode.Disposable {
   private disconnectConn() {
     if (this.conn) {
       this.trySync();
+      connectionForcedClosed = true;
       this.conn.dispose();
       this.conn = undefined;
-      connectionForcedClosed = true;
+      this.setStatus(false, undefined);
     }
   }
 
@@ -856,15 +857,17 @@ export class ImandraServer implements vscode.Disposable {
     }
     this.conn = new ImandraServerConn(this.config, this.ctx);
     this.conn.onProcDied((reason: WrongVersion | undefined) => {
-      this.conn = undefined;
-      this.setStatus(false, reason);
-      this.nRestarts++;
-      if (reason === undefined) {
-        // try to restart in a little while
-        setTimeout(() => {
-          console.log("try to restart imandra-vscode-server");
-          this.setupConn();
-        }, 5 * 1000);
+      if (!connectionForcedClosed) {
+        this.conn = undefined;
+        this.setStatus(false, reason);
+        this.nRestarts++;
+        if (reason === undefined) {
+          // try to restart in a little while
+          setTimeout(() => {
+            console.log("try to restart imandra-vscode-server");
+            this.setupConn();
+          }, 5 * 1000);
+        }
       }
     });
     // now start the connection
