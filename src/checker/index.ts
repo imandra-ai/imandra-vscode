@@ -313,7 +313,7 @@ class LineBuffer {
   }
 
   public addString(s: string) {
-    let buf = Buffer.from(s, "utf8");
+    const buf = Buffer.from(s, "utf8");
     this.addBuf(buf);
   }
 
@@ -740,6 +740,7 @@ export class ImandraServerConn implements vscode.Disposable {
     //subproc.stdout.on("data", msg => {
     //  if (this.debug) console.log(`imandra.stdout: ${msg}`);
     //});
+    this.setupConn(subproc);
     console.log(`state: ${state[this.st]}, PID ${this.subproc ? this.subproc.pid : 0}`);
     if (this.connected()) {
       for (const d of vscode.workspace.textDocuments) this.addDoc(d); // add existing docs
