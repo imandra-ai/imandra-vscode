@@ -2,7 +2,6 @@
 
 import * as vscode from "vscode";
 import * as proc from "child_process";
-import * as net from "net";
 import { promisify, inspect } from "util";
 import * as assert from "assert";
 import * as path from "path";
@@ -38,18 +37,6 @@ function IPosToPos(p: IPosition): vscode.Position {
 
 function IRangeToRange(r: IRange): vscode.Range {
   return new vscode.Range(IPosToPos(r.start), IPosToPos(r.end));
-}
-
-function waitForConnectionPromise(server: net.Server): Promise<net.Socket> {
-  return new Promise((resolve, _) => {
-    server.once("connection", (sock: net.Socket) => {
-      resolve(sock);
-    });
-  });
-}
-
-function listenPromise(server: net.Server): Promise<void> {
-  return new Promise((resolve, _) => server.listen(() => resolve()));
 }
 
 function isDocIml(d: vscode.TextDocument): boolean {
@@ -325,6 +312,11 @@ class LineBuffer {
     this.len += b.length;
   }
 
+  public addString(s: string) {
+    let buf = Buffer.from(s, "utf8");
+    this.addBuf(buf);
+  }
+
   public hasLine(): boolean {
     const i = this.buf.slice(0, this.len).indexOf("\n");
     this.lineIdx = i;
@@ -367,9 +359,7 @@ export class ImandraServerConn implements vscode.Disposable {
   private config: ImandraServerConfig;
   private buffer = new LineBuffer();
   private st: state = state.Start;
-  private subprocConn: undefined | net.Socket;
   private subproc: undefined | proc.ChildProcess; // connection to imandra server
-  private server: net.Server; // listen for a connection from imandra
   private docs: Map<string, DocState> = new Map(); // set of active docs, by their uri string
   private progress = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
   private subscriptions: vscode.Disposable[] = [this.progress];
@@ -385,17 +375,14 @@ export class ImandraServerConn implements vscode.Disposable {
   }
 
   // setup connection to imandra-vscode-server
-  private setupConn(subproc: proc.ChildProcess, sock: net.Socket) {
+  private setupConn(subproc: proc.ChildProcess) {
     this.subproc = subproc;
-    this.subprocConn = sock;
     if (this.subproc.pid) {
       this.st = state.Connected;
     } else {
       this.st = state.Disposed;
       return;
     }
-    sock.setNoDelay();
-    sock.setKeepAlive(true);
     this.subproc.on("close", (code, signal) => {
       console.log(`imandra-vscode closed with code=${code}, signal=${signal}`);
       this.dispose();
@@ -404,10 +391,11 @@ export class ImandraServerConn implements vscode.Disposable {
       console.log(`imandra-vscode exited with ${code}`);
       this.dispose();
     });
-    sock.on("data", data => {
+    this.subproc.stdout.on("data", data => {
       if (this.debug) console.log(`got message from imandra: ${data}`);
       // add to internal buffer
-      this.buffer.addBuf(data);
+      if (typeof data === "string") this.buffer.addString(data);
+      else this.buffer.addBuf(data);
       while (this.buffer.hasLine()) {
         const line = this.buffer.getLine().trim();
         if (line === "") continue;
@@ -445,7 +433,6 @@ export class ImandraServerConn implements vscode.Disposable {
   public constructor(config: ImandraServerConfig, ctx: vscode.ExtensionContext) {
     this.config = config;
     this.clearProgress();
-    this.server = net.createServer();
     const decoStyle = (iPath: string, color: string) =>
       vscode.window.createTextEditorDecorationType({
         //backgroundColor: new vscode.ThemeColor("editor.wordHighlightBackground"),
@@ -479,7 +466,6 @@ export class ImandraServerConn implements vscode.Disposable {
       }
       this.subproc = undefined;
 
-      this.server.close();
       this.procDie.fire(reason); // notify
     }
   }
@@ -490,7 +476,8 @@ export class ImandraServerConn implements vscode.Disposable {
 
   /// Send a message to the underlying server.
   public async sendMsg(m: msg.Msg): Promise<void> {
-    const conn = this.subprocConn;
+    if (!this.subproc) throw new Error("subprocess not present");
+    const conn = this.subproc.stdin;
     if (!this.connected() || conn === undefined) {
       console.log("do not send message, imandra-vscode disconnected");
       throw new Error("imandra-vscode disconnected");
@@ -734,20 +721,14 @@ export class ImandraServerConn implements vscode.Disposable {
     // listen on random port
     console.log("connecting to imandra-vscode-server...");
     // TODO: use `opam exec -- imandra-vscode-server` instead
-    await listenPromise(this.server);
-    const port = this.server.address().port;
     const args = [
       ...(this.debug ? ["-d", "4"] : []),
       ...(this.config.persistentCache ? ["--persistent-cache"] : []),
       ...(this.config.autoUpdate ? [] : ["--skip-update"]),
-      "--host",
-      "127.0.0.1",
-      "--port",
-      port.toString(),
+      "--stdio",
     ];
     if (this.debug) console.log("call imandra-vscode-server with args ", args);
-    const sockP = waitForConnectionPromise(this.server);
-    const subproc = proc.spawn(this.config.serverPath, args, { stdio: ["ignore", "pipe", "pipe"] });
+    const subproc = proc.spawn(this.config.serverPath, args, { stdio: ["pipe", "pipe", "pipe"] });
     if (!subproc.pid) {
       onConn(false);
       this.dispose();
@@ -756,15 +737,9 @@ export class ImandraServerConn implements vscode.Disposable {
     subproc.stderr.on("data", msg => {
       if (this.debug) console.log(`imandra.stderr: ${msg}`);
     });
-    subproc.stdout.on("data", msg => {
-      if (this.debug) console.log(`imandra.stdout: ${msg}`);
-    });
-    console.log(`waiting for connection (pid: ${subproc.pid})...`);
-    const sock = await sockP;
-    console.log("got connection!");
-    if (this.subprocConn === undefined) {
-      this.setupConn(subproc, sock);
-    }
+    //subproc.stdout.on("data", msg => {
+    //  if (this.debug) console.log(`imandra.stdout: ${msg}`);
+    //});
     console.log(`state: ${state[this.st]}, PID ${this.subproc ? this.subproc.pid : 0}`);
     if (this.connected()) {
       for (const d of vscode.workspace.textDocuments) this.addDoc(d); // add existing docs
