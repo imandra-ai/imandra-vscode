@@ -1,3 +1,7 @@
+## 0.4.6
+
+Logging to explicit ImandraLogView output channel.
+
 ## 0.4.5
 
 Allowing explicit disconnection to the Imandra Semantic Server.

@@ -56,6 +56,8 @@ function isDocIml(d: vscode.TextDocument): boolean {
   return d.languageId === "imandra" || d.fileName.endsWith(".iml") || d.fileName.endsWith(".ire"); // TODO: improve on that!
 }
 
+const imandraLogger = vscode.window.createOutputChannel("imandraLogView");
+
 // messages to imandra
 namespace msg {
   export interface IDocAdd {
@@ -357,7 +359,7 @@ class WrongVersion {
   }
 }
 
-class ForceClosed {}
+class ForceClosed { }
 
 /**
  * A connection to imandra-vscode-server, as well as the current
@@ -384,6 +386,9 @@ export class ImandraServerConn implements vscode.Disposable {
     return this.config.debug;
   }
 
+  private logMessage(d: string): void {
+    if (this.debug) imandraLogger.appendLine(d);
+  }
   // setup connection to imandra-vscode-server
   private setupConn(subproc: proc.ChildProcess, sock: net.Socket) {
     this.subproc = subproc;
@@ -412,6 +417,7 @@ export class ImandraServerConn implements vscode.Disposable {
         const line = this.buffer.getLine().trim();
         if (line === "") continue;
         try {
+          this.logMessage(`Received: ${line}`);
           const res = JSON.parse(line) as response.Res;
           this.handleRes(res);
         } catch (e) {
@@ -474,7 +480,7 @@ export class ImandraServerConn implements vscode.Disposable {
         setTimeout(() => {
           try {
             subproc.kill();
-          } catch (_) {}
+          } catch (_) { }
         }, 800);
       }
       this.subproc = undefined;
@@ -496,7 +502,7 @@ export class ImandraServerConn implements vscode.Disposable {
       throw new Error("imandra-vscode disconnected");
     }
     const j = JSON.stringify(m);
-    //console.log(`send msg ${j}`);
+    this.logMessage(`send msg ${j}`);
     const isDone = conn.write(j);
     if (!isDone) {
       await promisify(f => conn.once("drain", () => f(null, {})));
@@ -739,7 +745,8 @@ export class ImandraServerConn implements vscode.Disposable {
     const args = [
       ...(this.debug ? ["-d", "4"] : []),
       ...(this.config.persistentCache ? ["--persistent-cache"] : []),
-      ...(this.config.autoUpdate ? [] : ["--skip-update"]),
+      // potential TODO option for calling to imandra-repl  
+      // ...(this.config.autoUpdate ? [] : ["--skip-update"]),
       "--host",
       "127.0.0.1",
       "--port",
@@ -818,7 +825,7 @@ export class ImandraServer implements vscode.Disposable {
       console.log("send `sync` message");
       try {
         await this.conn.sendMsg("cache_sync");
-      } catch {}
+      } catch { }
     }
   }
 
