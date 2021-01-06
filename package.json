@@ -134,6 +134,11 @@
           "default": true,
           "description": "Enable auto-updating of imandra-vscode-server"
         },
+        "imandra.imandra-vscode-server.check-on-every-change": {
+          "type": "boolean",
+          "default": true,
+          "description": "Re-check the buffer on every change (else: on save only)"
+        },
         "imandra.path.ocpindent": {
           "type": "string",
           "default": "ocp-indent",
