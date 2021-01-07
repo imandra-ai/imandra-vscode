@@ -134,10 +134,20 @@
           "default": true,
           "description": "Enable auto-updating of imandra-vscode-server"
         },
-        "imandra.imandra-vscode-server.check-on-every-change": {
-          "type": "boolean",
-          "default": true,
-          "description": "Re-check the buffer on every change (else: on save only)"
+        "imandra.imandra-vscode-server.check": {
+          "type": "string",
+          "enum": [
+            "change",
+            "save",
+            "command"
+          ],
+          "default": "save",
+          "description": "When to check the current buffer",
+          "enumDescriptions": [
+            "check buffer on every change",
+            "check buffer on save",
+            "only check the buffer when the `check` command is invoked"
+          ]
         },
         "imandra.path.ocpindent": {
           "type": "string",
@@ -284,8 +294,12 @@
         "title": "Imandra: clear cache"
       },
       {
-        "command": "imandra.server.diconnect",
+        "command": "imandra.server.disconnect",
         "title": "Imandra: disconnect server"
+      },
+      {
+        "command": "imandra.server.check",
+        "title": "Imandra: check buffer"
       }
     ]
   },
