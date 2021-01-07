@@ -3,7 +3,7 @@
   "name": "iml-vscode",
   "displayName": "Imandra IDE",
   "description": "Imandra (ReasonML/OCaml) reasoning studio",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "publisher": "aestheticintegration",
   "bugs": {
     "url": "https://github.com/aestheticintegration/iml-vscode/issues"

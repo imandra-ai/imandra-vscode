@@ -1,3 +1,7 @@
+## 0.4.8
+
+Adding setting to switch between updating the Imandra Semantic Server on keystroke or on save.
+
 ## 0.4.7
 
 Changing tool tip to reflect that Imandra config for merlin is running.
