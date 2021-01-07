@@ -1,3 +1,7 @@
+## 0.4.7
+
+Changing tool tip to reflect that Imandra config for merlin is running.
+
 ## 0.4.6
 
 Logging to explicit ImandraLogView output channel.
@@ -41,7 +45,7 @@ Updating assocsuffix syntax to be in line with the new merlin.
 
 ## 0.2.8
 
-Updating comment completion to erradicate bug on comment auto-closing. 
+Updating comment completion to erradicate bug on comment auto-closing.
 
 ## 0.2.7
 
