@@ -282,6 +282,10 @@
         "title": "Imandra: reload Merlin plugin"
       },
       {
+        "command": "imandra.lsp.reload",
+        "title": "Imandra: reload LSP plugin"
+      },
+      {
         "command": "imandra.server.reload",
         "title": "Imandra: reload semantic server"
       },
