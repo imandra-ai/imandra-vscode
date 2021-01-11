@@ -93,7 +93,7 @@ const imandraConfiguration = {
 
 export async function activate(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
   context.subscriptions.push(vscode.languages.setLanguageConfiguration("imandra", imandraConfiguration));
-  const ps = await Promise.all([client.launch(context), checker.launch(context)]);
+  const ps = await Promise.all([client.launchMerlin(context), client.launchLsp(context), checker.launch(context)]);
   return vscode.Disposable.from(...ps);
 }
 
