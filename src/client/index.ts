@@ -7,15 +7,20 @@ import * as request from "./request";
 
 class ClientWindow implements vscode.Disposable {
   public readonly merlin: vscode.StatusBarItem;
+  public readonly lsp: vscode.StatusBarItem;
   constructor() {
     this.merlin = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
     this.merlin.text = "$(hubot) [loading]";
     this.merlin.command = "imandra.showMerlinFiles";
     this.merlin.show();
+    this.lsp = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
+    this.lsp.text = "$(hubot) [loading]";
+    this.lsp.show();
     return this;
   }
   public dispose() {
     this.merlin.dispose();
+    this.lsp.dispose();
   }
 }
 
@@ -29,19 +34,13 @@ class ErrorHandler {
 }
 
 let curClient: client.LanguageClient | undefined;
+let curClientLsp: client.LanguageClient | undefined;
 
-async function startLsp(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
+export async function launchLsp(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
-  const module = "imandra-lsp";
-  const options = { execArgv: [] };
-  const transport = client.TransportKind.stdio;
-  const run = { module, transport };
-  const debug = {
-    module,
-    options,
-    transport,
-  };
-  const serverOptions = { run, debug };
+  const exec: client.Executable = { command: "imandra-lsp" };
+  //const transport = client.TransportKind.stdio;
+  //const run = { module, transport };
   const languages = imandraConfig.get<string[]>("server.languages", ["imandra", "imandra-reason"]);
   const documentSelector = new Array();
   for (const language of languages) {
@@ -63,25 +62,31 @@ async function startLsp(context: vscode.ExtensionContext): Promise<vscode.Dispos
       ],
     },
   };
-  const languageClient = new client.LanguageClient("ImandraLSP", serverOptions, clientOptions);
+  const languageClient = new client.LanguageClient("imandra.lsp", "ImandraLSP", exec, clientOptions);
   const window = new ClientWindow();
   const session = languageClient.start();
-  curClient = languageClient; // so we can restart it
+  curClientLsp = languageClient; // so we can restart it
   context.subscriptions.push(window);
   context.subscriptions.push(session);
+  const reloadCmd = vscode.commands.registerCommand("imandra.lsp.reload", () => {
+    console.log("imandra.lsp.reload called");
+    restartLsp(context);
+  });
+  context.subscriptions.push(reloadCmd);
   await languageClient.onReady();
   command.registerAll(context, languageClient);
   request.registerAll(context, languageClient);
-  window.merlin.text = "$(hubot) [imandra-lsp]";
-  window.merlin.tooltip = "Imandra LSP online";
+  window.lsp.text = "$(hubot) [imandra-lsp]";
+  window.lsp.tooltip = "Imandra LSP online";
+  window.lsp.command = "imandra.lsp.reload";
   return {
     dispose() {
-      if (curClient) curClient.stop();
+      if (curClientLsp) curClientLsp.stop();
     },
   };
 }
 
-export async function launch(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
+export async function launchMerlin(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
   const module = context.asAbsolutePath(path.join("node_modules", "imandra-language-server", "bin", "server"));
   const options = { execArgv: ["--nolazy", "--inspect=6009"] };
@@ -124,14 +129,10 @@ export async function launch(context: vscode.ExtensionContext): Promise<vscode.D
   context.subscriptions.push(session);
   const reloadCmd = vscode.commands.registerCommand("imandra.merlin.reload", () => {
     console.log("imandra.merlin.reload called");
-    restart(context);
+    restartMerlin(context);
   });
   context.subscriptions.push(reloadCmd);
   await languageClient.onReady();
-
-  const lsp = await startLsp(context);
-  context.subscriptions.push(lsp);
-
   command.registerAll(context, languageClient);
   request.registerAll(context, languageClient);
   window.merlin.text = "$(hubot) [imandra-merlin]";
@@ -143,10 +144,18 @@ export async function launch(context: vscode.ExtensionContext): Promise<vscode.D
   };
 }
 
-export async function restart(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
+export async function restartMerlin(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
   if (curClient !== undefined) {
     await curClient.stop();
     curClient = undefined;
   }
-  return launch(context);
+  return launchMerlin(context);
+}
+
+export async function restartLsp(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
+  if (curClientLsp !== undefined) {
+    await curClientLsp.stop();
+    curClientLsp = undefined;
+  }
+  return launchLsp(context);
 }
