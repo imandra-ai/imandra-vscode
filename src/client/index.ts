@@ -30,6 +30,57 @@ class ErrorHandler {
 
 let curClient: client.LanguageClient | undefined;
 
+async function startLsp(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
+  const imandraConfig = vscode.workspace.getConfiguration("imandra");
+  const module = "imandra-lsp";
+  const options = { execArgv: [] };
+  const transport = client.TransportKind.stdio;
+  const run = { module, transport };
+  const debug = {
+    module,
+    options,
+    transport,
+  };
+  const serverOptions = { run, debug };
+  const languages = imandraConfig.get<string[]>("server.languages", ["imandra", "imandra-reason"]);
+  const documentSelector = new Array();
+  for (const language of languages) {
+    documentSelector.push({ language, scheme: "file" });
+    documentSelector.push({ language, scheme: "untitled" });
+  }
+  const clientOptions: client.LanguageClientOptions = {
+    diagnosticCollectionName: "imandra-lsp",
+    documentSelector,
+    errorHandler: new ErrorHandler(),
+    initializationOptions: imandraConfig,
+    outputChannelName: "Imandra LSP",
+    stdioEncoding: "utf8",
+    synchronize: {
+      configurationSection: "imandra",
+      fileEvents: [
+        vscode.workspace.createFileSystemWatcher("**/*.iml"),
+        vscode.workspace.createFileSystemWatcher("**/*.ire"),
+      ],
+    },
+  };
+  const languageClient = new client.LanguageClient("ImandraLSP", serverOptions, clientOptions);
+  const window = new ClientWindow();
+  const session = languageClient.start();
+  curClient = languageClient; // so we can restart it
+  context.subscriptions.push(window);
+  context.subscriptions.push(session);
+  await languageClient.onReady();
+  command.registerAll(context, languageClient);
+  request.registerAll(context, languageClient);
+  window.merlin.text = "$(hubot) [imandra-lsp]";
+  window.merlin.tooltip = "Imandra LSP online";
+  return {
+    dispose() {
+      if (curClient) curClient.stop();
+    },
+  };
+}
+
 export async function launch(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
   const module = context.asAbsolutePath(path.join("node_modules", "imandra-language-server", "bin", "server"));
@@ -77,6 +128,10 @@ export async function launch(context: vscode.ExtensionContext): Promise<vscode.D
   });
   context.subscriptions.push(reloadCmd);
   await languageClient.onReady();
+
+  const lsp = await startLsp(context);
+  context.subscriptions.push(lsp);
+
   command.registerAll(context, languageClient);
   request.registerAll(context, languageClient);
   window.merlin.text = "$(hubot) [imandra-merlin]";
