@@ -370,7 +370,7 @@ class WrongVersion {
   }
 }
 
-class ForceClosed {}
+class ForceClosed { }
 
 /**
  * A connection to imandra-vscode-server, as well as the current
@@ -491,7 +491,7 @@ export class ImandraServerConn implements vscode.Disposable {
         setTimeout(() => {
           try {
             subproc.kill();
-          } catch (_) {}
+          } catch (_) { }
         }, 800);
       }
       this.subproc = undefined;
@@ -895,7 +895,7 @@ export class ImandraServer implements vscode.Disposable {
       console.log("send `sync` message");
       try {
         await this.conn.sendMsg("cache_sync");
-      } catch {}
+      } catch { }
     }
   }
 
@@ -1025,7 +1025,7 @@ export async function launch(ctx: vscode.ExtensionContext): Promise<vscode.Dispo
     serverPath: imandraConfig.get<string>("path.imandra-vscode-server", "imandra-vscode-server"),
     persistentCache: imandraConfig.get<boolean>("dev.cache.imandra-vscode-server", false),
     autoUpdate: imandraConfig.get<boolean>("debug.auto-update-server", true),
-    whenToCheck: whenToCheck,
+    whenToCheck,
   };
   console.log(
     `imandra.debug: ${config.debug}, persistent cache: ${config.persistentCache}, \
