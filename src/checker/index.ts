@@ -19,9 +19,11 @@ enum state {
 /// When do we re-check the buffer?
 enum CheckBufferWhen {
   /// Update on every change.
-  OnEveryChange,
+  OnEveryChange = "change",
   /// Update only when the buffer is saved.
-  OnSave,
+  OnSave = "save",
+  /// Update only via the command
+  OnCommand = "command",
 }
 
 export interface IPosition {
@@ -222,8 +224,6 @@ class DocState implements vscode.Disposable {
     if (this.editor) {
       this.hadEditor = true;
       this.updateDecorations();
-      if (this.debug) console.log(`send doc_check for ${this.uri}:${this.version}`);
-      this.server.sendMsg({ kind: "doc_check", version: this.version, uri: this.uriStr, len: strByteLen(this.text) });
     } else if (this.hadEditor) {
       // had an editor but not anymore: cancel any lingering computation
       this.hadEditor = false;
@@ -370,7 +370,7 @@ class WrongVersion {
   }
 }
 
-class ForceClosed {}
+class ForceClosed { }
 
 /**
  * A connection to imandra-vscode-server, as well as the current
@@ -416,11 +416,11 @@ export class ImandraServerConn implements vscode.Disposable {
       console.log(`imandra-vscode closed with code=${code}, signal=${signal}`);
       this.dispose();
     });
-    this.subproc.on("exit", code => {
+    this.subproc.on("exit", (code) => {
       console.log(`imandra-vscode exited with ${code}`);
       this.dispose();
     });
-    sock.on("data", data => {
+    sock.on("data", (data) => {
       if (this.debug) console.log(`got message from imandra: ${data}`);
       // add to internal buffer
       this.buffer.addBuf(data);
@@ -476,7 +476,7 @@ export class ImandraServerConn implements vscode.Disposable {
   }
 
   public dispose(reason?: WrongVersion | ForceClosed) {
-    this.subscriptions.forEach(x => x.dispose());
+    this.subscriptions.forEach((x) => x.dispose());
     this.subscriptions.length = 0;
     this.docs.forEach((d, _) => d.dispose());
     this.diagnostics.clear();
@@ -491,7 +491,7 @@ export class ImandraServerConn implements vscode.Disposable {
         setTimeout(() => {
           try {
             subproc.kill();
-          } catch (_) {}
+          } catch (_) { }
         }, 800);
       }
       this.subproc = undefined;
@@ -516,7 +516,7 @@ export class ImandraServerConn implements vscode.Disposable {
     this.logMessage(`send msg ${j}`);
     const isDone = conn.write(j);
     if (!isDone) {
-      await promisify(f => conn.once("drain", () => f(null, {})));
+      await promisify((f) => conn.once("drain", () => f(null, {})));
     }
     return;
   }
@@ -613,12 +613,39 @@ export class ImandraServerConn implements vscode.Disposable {
   /// will be handled in `handleRes`
   private askToCheckDoc(d: DocState) {
     const key = d.document.uri.fsPath;
+    if (this.debug) console.log(`send doc_check for ${d.uri}:${d.version}`);
     this.sendMsg({
       kind: "doc_check",
       uri: key,
       version: d.version,
       len: strByteLen(d.text),
     });
+  }
+
+  /// If the current editor points to an .iml buffer, check that.
+  public askToCheckCurrentEditor() {
+    // FIXME: use that once we figure out how to use modern TS
+    // const d = vscode.window.activeTextEditor?.document;
+    // if (!d) {
+    //   return;
+    // }
+
+    const ed = vscode.window.activeTextEditor;
+    if (!ed) {
+      return;
+    }
+    const d = ed.document;
+
+    if (!isDocIml(d)) {
+      return;
+    }
+    const key = d.uri.fsPath;
+    const dState = this.docs.get(key);
+    if (!dState) {
+      return;
+    }
+
+    this.askToCheckDoc(dState);
   }
 
   /// Called when the set of visible editors in vscode changes.
@@ -730,10 +757,7 @@ export class ImandraServerConn implements vscode.Disposable {
             this.sendDoc(d.document); // send again
             return;
           }
-          const expectedMd5 = crypto
-            .createHash("md5")
-            .update(text)
-            .digest("hex");
+          const expectedMd5 = crypto.createHash("md5").update(text).digest("hex");
           if (expectedLen !== res.len) {
             console.log(`ack: expected md5 ${expectedMd5}, reported md5 ${res.md5}. Resend.`);
             this.sendDoc(d.document); // send again
@@ -784,6 +808,7 @@ export class ImandraServerConn implements vscode.Disposable {
     const args = [
       ...(this.debug ? ["-d", "4"] : []),
       ...(this.config.persistentCache ? ["--persistent-cache"] : []),
+      //...(this.config.whenToCheck === CheckBufferWhen.OnCommand ? ["--no-auto-check"] : []),
       // potential TODO option for calling to imandra-repl
       // ...(this.config.autoUpdate ? [] : ["--skip-update"]),
       "--host",
@@ -799,10 +824,10 @@ export class ImandraServerConn implements vscode.Disposable {
       this.dispose();
       return;
     }
-    subproc.stderr.on("data", msg => {
+    subproc.stderr.on("data", (msg) => {
       if (this.debug) console.log(`imandra.stderr: ${msg}`);
     });
-    subproc.stdout.on("data", msg => {
+    subproc.stdout.on("data", (msg) => {
       if (this.debug) console.log(`imandra.stdout: ${msg}`);
     });
     console.log(`waiting for connection (pid: ${subproc.pid})...`);
@@ -840,7 +865,8 @@ export class ImandraServer implements vscode.Disposable {
   private ctx: vscode.ExtensionContext;
   private nRestarts = 0;
   private lastSuccessfulStart = Date.now();
-  private status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+  private status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 20);
+  private checkButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10);
   private subscriptions: vscode.Disposable[] = [];
 
   private setStatus(ok: boolean, reason?: WrongVersion | ForceClosed) {
@@ -860,6 +886,8 @@ export class ImandraServer implements vscode.Disposable {
       this.status.tooltip = `Lost connection to imandra-vscode-server (${this.nRestarts} restarts)`;
     }
     this.status.show();
+    if (ok) this.checkButton.show();
+    else this.checkButton.hide();
   }
 
   private async trySync() {
@@ -867,7 +895,7 @@ export class ImandraServer implements vscode.Disposable {
       console.log("send `sync` message");
       try {
         await this.conn.sendMsg("cache_sync");
-      } catch {}
+      } catch { }
     }
   }
 
@@ -919,7 +947,7 @@ export class ImandraServer implements vscode.Disposable {
       }
     });
     // now actually start the connection
-    this.conn.init(ok => {
+    this.conn.init((ok) => {
       this.setStatus(ok);
       if (ok) {
         this.nRestarts = 0;
@@ -928,6 +956,15 @@ export class ImandraServer implements vscode.Disposable {
         this.conn = undefined;
       }
     });
+  }
+
+  private tryToCheck() {
+    console.log("imandra.server.check called");
+    if (this.conn) {
+      this.conn.askToCheckCurrentEditor();
+    } else {
+      vscode.window.showErrorMessage("not connected to imandra.");
+    }
   }
 
   public init() {
@@ -945,11 +982,17 @@ export class ImandraServer implements vscode.Disposable {
         console.log("imandra.server.cache.sync called");
         if (this.conn) this.conn.sendMsg("cache_sync");
       }),
-      vscode.commands.registerCommand("imandra.server.diconnect", () => {
-        console.log("imandra.server.diconnect called");
+      vscode.commands.registerCommand("imandra.server.disconnect", () => {
+        console.log("imandra.server.disconnect called");
         this.disconnectConn();
       }),
+      vscode.commands.registerCommand("imandra.server.check", () => {
+        this.tryToCheck();
+      }),
     );
+    this.checkButton.text = "[check buffer]";
+    this.checkButton.command = "imandra.server.check";
+    this.checkButton.tooltip = "ask Imandra to check the buffer.";
     this.setupConn();
   }
 
@@ -961,7 +1004,7 @@ export class ImandraServer implements vscode.Disposable {
 
   public async dispose() {
     this.status.dispose();
-    this.subscriptions.forEach(d => d.dispose());
+    this.subscriptions.forEach((d) => d.dispose());
     this.subscriptions.length = 0;
     if (this.conn) {
       await this.trySync();
@@ -975,15 +1018,14 @@ let cur: ImandraServer | null = null;
 
 export async function launch(ctx: vscode.ExtensionContext): Promise<vscode.Disposable> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
+  const whenToCheck = imandraConfig.get<CheckBufferWhen>("imandra-vscode-server.check", CheckBufferWhen.OnEveryChange);
   const config: ImandraServerConfig = {
     ...defaultImandraServerConfig,
     debug: imandraConfig.get<boolean>("debug.imandra-vscode-server", false),
     serverPath: imandraConfig.get<string>("path.imandra-vscode-server", "imandra-vscode-server"),
     persistentCache: imandraConfig.get<boolean>("dev.cache.imandra-vscode-server", false),
     autoUpdate: imandraConfig.get<boolean>("debug.auto-update-server", true),
-    whenToCheck: imandraConfig.get<boolean>("imandra-vscode-server.check-on-every-change", true)
-      ? CheckBufferWhen.OnEveryChange
-      : CheckBufferWhen.OnSave,
+    whenToCheck,
   };
   console.log(
     `imandra.debug: ${config.debug}, persistent cache: ${config.persistentCache}, \
