@@ -416,11 +416,11 @@ export class ImandraServerConn implements vscode.Disposable {
       console.log(`imandra-vscode closed with code=${code}, signal=${signal}`);
       this.dispose();
     });
-    this.subproc.on("exit", (code) => {
+    this.subproc.on("exit", code => {
       console.log(`imandra-vscode exited with ${code}`);
       this.dispose();
     });
-    sock.on("data", (data) => {
+    sock.on("data", data => {
       if (this.debug) console.log(`got message from imandra: ${data}`);
       // add to internal buffer
       this.buffer.addBuf(data);
@@ -476,7 +476,7 @@ export class ImandraServerConn implements vscode.Disposable {
   }
 
   public dispose(reason?: WrongVersion | ForceClosed) {
-    this.subscriptions.forEach((x) => x.dispose());
+    this.subscriptions.forEach(x => x.dispose());
     this.subscriptions.length = 0;
     this.docs.forEach((d, _) => d.dispose());
     this.diagnostics.clear();
@@ -516,7 +516,7 @@ export class ImandraServerConn implements vscode.Disposable {
     this.logMessage(`send msg ${j}`);
     const isDone = conn.write(j);
     if (!isDone) {
-      await promisify((f) => conn.once("drain", () => f(null, {})));
+      await promisify(f => conn.once("drain", () => f(null, {})));
     }
     return;
   }
@@ -757,7 +757,10 @@ export class ImandraServerConn implements vscode.Disposable {
             this.sendDoc(d.document); // send again
             return;
           }
-          const expectedMd5 = crypto.createHash("md5").update(text).digest("hex");
+          const expectedMd5 = crypto
+            .createHash("md5")
+            .update(text)
+            .digest("hex");
           if (expectedLen !== res.len) {
             console.log(`ack: expected md5 ${expectedMd5}, reported md5 ${res.md5}. Resend.`);
             this.sendDoc(d.document); // send again
@@ -824,10 +827,10 @@ export class ImandraServerConn implements vscode.Disposable {
       this.dispose();
       return;
     }
-    subproc.stderr.on("data", (msg) => {
+    subproc.stderr.on("data", msg => {
       if (this.debug) console.log(`imandra.stderr: ${msg}`);
     });
-    subproc.stdout.on("data", (msg) => {
+    subproc.stdout.on("data", msg => {
       if (this.debug) console.log(`imandra.stdout: ${msg}`);
     });
     console.log(`waiting for connection (pid: ${subproc.pid})...`);
@@ -947,7 +950,7 @@ export class ImandraServer implements vscode.Disposable {
       }
     });
     // now actually start the connection
-    this.conn.init((ok) => {
+    this.conn.init(ok => {
       this.setStatus(ok);
       if (ok) {
         this.nRestarts = 0;
@@ -1004,7 +1007,7 @@ export class ImandraServer implements vscode.Disposable {
 
   public async dispose() {
     this.status.dispose();
-    this.subscriptions.forEach((d) => d.dispose());
+    this.subscriptions.forEach(d => d.dispose());
     this.subscriptions.length = 0;
     if (this.conn) {
       await this.trySync();
@@ -1025,7 +1028,7 @@ export async function launch(ctx: vscode.ExtensionContext): Promise<vscode.Dispo
     serverPath: imandraConfig.get<string>("path.imandra-vscode-server", "imandra-vscode-server"),
     persistentCache: imandraConfig.get<boolean>("dev.cache.imandra-vscode-server", false),
     autoUpdate: imandraConfig.get<boolean>("debug.auto-update-server", true),
-    whenToCheck: whenToCheck,
+    whenToCheck,
   };
   console.log(
     `imandra.debug: ${config.debug}, persistent cache: ${config.persistentCache}, \
