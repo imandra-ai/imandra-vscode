@@ -70,7 +70,7 @@ export async function launchLsp(context: vscode.ExtensionContext): Promise<vscod
     },
     debug: {
       command: "imandra-lsp",
-      args: ["--check-on-save=true", "--debug-all", "5"],
+      args: ["--check-on-save=true", "-d", "5"],
       transport: client.TransportKind.stdio,
     },
   };
