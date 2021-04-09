@@ -38,7 +38,7 @@ let curClientLsp: client.LanguageClient | undefined;
 
 export async function launchLsp(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
-  const exec: client.Executable = { command: "imandra-lsp" };
+  const exec: client.Executable = { command: "imandra-lsp", args: ["--check-on-save=true"] };
   //const transport = client.TransportKind.stdio;
   //const run = { module, transport };
   const languages = imandraConfig.get<string[]>("server.languages", ["imandra", "imandra-reason"]);
