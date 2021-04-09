@@ -38,11 +38,11 @@ let curClientLsp: client.LanguageClient | undefined;
 
 export async function launchLsp(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
   const imandraConfig = vscode.workspace.getConfiguration("imandra");
-  const exec: client.Executable = { command: "imandra-lsp", args: ["--check-on-save=true"] };
-  //const transport = client.TransportKind.stdio;
-  //const run = { module, transport };
+  ////const transport = client.TransportKind.stdio;
+  ////const run = { module, transport };
   const languages = imandraConfig.get<string[]>("server.languages", ["imandra", "imandra-reason"]);
-  const documentSelector = new Array();
+  console.log(`imandra config => languages: ${languages}`);
+  const documentSelector: client.DocumentSelector = new Array();
   for (const language of languages) {
     documentSelector.push({ language, scheme: "file" });
     documentSelector.push({ language, scheme: "untitled" });
@@ -50,19 +50,31 @@ export async function launchLsp(context: vscode.ExtensionContext): Promise<vscod
   const clientOptions: client.LanguageClientOptions = {
     diagnosticCollectionName: "imandra-lsp",
     documentSelector,
-    errorHandler: new ErrorHandler(),
+    //  errorHandler: new ErrorHandler(),
     initializationOptions: imandraConfig,
-    outputChannelName: "Imandra LSP",
+    //  outputChannelName: "Imandra LSP",
     stdioEncoding: "utf8",
-    synchronize: {
-      configurationSection: "imandra",
-      fileEvents: [
-        vscode.workspace.createFileSystemWatcher("**/*.iml"),
-        vscode.workspace.createFileSystemWatcher("**/*.ire"),
-      ],
+    //  //synchronize: {
+    //  //  configurationSection: "imandra",
+    //  //  fileEvents: [
+    //  //    vscode.workspace.createFileSystemWatcher("**/*.iml"),
+    //  //    vscode.workspace.createFileSystemWatcher("**/*.ire"),
+    //  //  ],
+    //  //},
+  };
+  const serverOptions: client.ServerOptions = {
+    run: {
+      command: "imandra-lsp",
+      args: ["--check-on-save=true"],
+      transport: client.TransportKind.stdio,
+    },
+    debug: {
+      command: "imandra-lsp",
+      args: ["--check-on-save=true", "--debug-all", "5"],
+      transport: client.TransportKind.stdio,
     },
   };
-  const languageClient = new client.LanguageClient("imandra.lsp", "ImandraLSP", exec, clientOptions);
+  const languageClient = new client.LanguageClient("imandra.lsp", "imandra lsp", serverOptions, clientOptions);
   const window = new ClientWindow();
   const session = languageClient.start();
   curClientLsp = languageClient; // so we can restart it
