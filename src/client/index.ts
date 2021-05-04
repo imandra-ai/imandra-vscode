@@ -70,7 +70,7 @@ export async function launchLsp(context: vscode.ExtensionContext): Promise<vscod
     },
     debug: {
       command: "imandra-lsp",
-      args: ["--check-on-save=true", "-d", "5"],
+      args: ["--check-on-save=true", "-d", "5" /* "--incremental-sync=false" */],
       transport: client.TransportKind.stdio,
     },
   };
@@ -166,8 +166,9 @@ export async function restartMerlin(context: vscode.ExtensionContext): Promise<v
 
 export async function restartLsp(context: vscode.ExtensionContext): Promise<vscode.Disposable> {
   if (curClientLsp !== undefined) {
-    await curClientLsp.stop();
+    const c = curClientLsp;
     curClientLsp = undefined;
+    c.stop(); // async
   }
   return launchLsp(context);
 }
