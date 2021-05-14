@@ -3,7 +3,7 @@
   "name": "iml-vscode",
   "displayName": "Imandra IDE",
   "description": "Imandra (ReasonML/OCaml) reasoning studio",
-  "version": "0.4.7",
+  "version": "0.4.9",
   "publisher": "aestheticintegration",
   "bugs": {
     "url": "https://github.com/aestheticintegration/iml-vscode/issues"
@@ -133,6 +133,21 @@
           "type": "boolean",
           "default": true,
           "description": "Enable auto-updating of imandra-vscode-server"
+        },
+        "imandra.imandra-vscode-server.check": {
+          "type": "string",
+          "enum": [
+            "change",
+            "save",
+            "command"
+          ],
+          "default": "save",
+          "description": "When to check the current buffer",
+          "enumDescriptions": [
+            "check buffer on every change",
+            "check buffer on save",
+            "only check the buffer when the `check` command is invoked"
+          ]
         },
         "imandra.path.ocpindent": {
           "type": "string",
@@ -279,8 +294,12 @@
         "title": "Imandra: clear cache"
       },
       {
-        "command": "imandra.server.diconnect",
+        "command": "imandra.server.disconnect",
         "title": "Imandra: disconnect server"
+      },
+      {
+        "command": "imandra.server.check",
+        "title": "Imandra: check buffer"
       }
     ]
   },

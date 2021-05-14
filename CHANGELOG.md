@@ -1,3 +1,9 @@
+## 0.4.9
+
+## 0.4.8
+
+Adding setting  `Imandra-vscode-server:Check-on-every-change` to switch between updating the Imandra Semantic Server on keystroke or on save.
+
 ## 0.4.7
 
 Changing tool tip to reflect that Imandra config for merlin is running.
