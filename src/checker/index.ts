@@ -127,12 +127,22 @@ function strByteLen(s: string): number {
 
 // responses from Imandra
 namespace response {
+  export type TextType = "plain" | "markdown";
+
+  export interface IRichText {
+    text: string;
+    type: TextType;
+  }
+
+  /// A single text message.
+  export type AnyText = string | IRichText;
+
   export interface IValid {
     kind: "valid";
     range: IRange;
     uri: string;
     version: number;
-    msg: string[];
+    msg: AnyText[];
   }
 
   type info_kind = "error" | "warning" | "invalid" | "hint";
@@ -142,7 +152,7 @@ namespace response {
     range: IRange;
     uri: string;
     version: number;
-    msg: string;
+    msg: string | IRichText[];
   }
 
   export interface IAck {
@@ -175,6 +185,37 @@ namespace response {
 
   /** A response from imandra */
   export type Res = IValid | IInfo | IAck | IResend | IVersion | IPong | IProgress;
+}
+
+function RichTextToMarkedString(x: response.AnyText): string | vscode.MarkdownString {
+  if (typeof x === "string") {
+    return x;
+  } else {
+    return new vscode.MarkdownString(x.text);
+  }
+}
+
+/** Convert an input text object into a (possibly rich) string */
+function InfoResToMarkedString(x: string | response.IRichText[]): string | vscode.MarkdownString {
+  if (typeof x === "string") {
+    return x;
+  } else {
+    const txt = x.map(x => x.text).join("\n");
+    if (x.findIndex(x => x.type !== "markdown") > -1) {
+      return new vscode.MarkdownString(txt);
+    } else {
+      return txt;
+    }
+  }
+}
+
+/** Convert an input text object into a string */
+function InfoResToString(x: string | response.IRichText[]): string {
+  if (typeof x === "string") {
+    return x;
+  } else {
+    return x.map(x => x.text).join("\n");
+  }
 }
 
 /**
@@ -683,10 +724,8 @@ export class ImandraServerConn implements vscode.Disposable {
         const d = this.docs.get(res.uri);
         if (d) {
           const r = IRangeToRange(res.range);
-          const deco = {
-            range: r,
-            hoverMessage: res.msg,
-          };
+          const hoverMessage = res.msg.map(x => RichTextToMarkedString(x));
+          const deco = { range: r, hoverMessage };
           d.addDecoration(res.version, "smile", deco);
         }
         return;
@@ -697,10 +736,8 @@ export class ImandraServerConn implements vscode.Disposable {
         const d = this.docs.get(res.uri);
         if (d) {
           const r = IRangeToRange(res.range);
-          const deco = {
-            range: r,
-            hoverMessage: res.msg,
-          };
+          const hoverMessage = InfoResToMarkedString(res.msg);
+          const deco = { range: r, hoverMessage };
           d.addDecoration(res.version, "puzzled", deco);
         }
         return;
@@ -712,7 +749,8 @@ export class ImandraServerConn implements vscode.Disposable {
         if (d) {
           const r = IRangeToRange(res.range);
           const sev = vscode.DiagnosticSeverity.Error;
-          const diag = new vscode.Diagnostic(r, res.msg, sev);
+          const msg = InfoResToString(res.msg);
+          const diag = new vscode.Diagnostic(r, msg, sev);
           diag.source = "imandra";
           d.addDiagnostic(res.version, diag);
         }
@@ -725,7 +763,8 @@ export class ImandraServerConn implements vscode.Disposable {
         if (d) {
           const r = IRangeToRange(res.range);
           const sev = vscode.DiagnosticSeverity.Warning;
-          const diag = new vscode.Diagnostic(r, res.msg, sev);
+          const msg = InfoResToString(res.msg);
+          const diag = new vscode.Diagnostic(r, msg, sev);
           diag.source = "imandra";
           d.addDiagnostic(res.version, diag);
         }
@@ -738,7 +777,8 @@ export class ImandraServerConn implements vscode.Disposable {
         if (d) {
           const r = IRangeToRange(res.range);
           const sev = vscode.DiagnosticSeverity.Information;
-          const diag = new vscode.Diagnostic(r, res.msg, sev);
+          const msg = InfoResToString(res.msg);
+          const diag = new vscode.Diagnostic(r, msg, sev);
           diag.source = "imandra";
           d.addDiagnostic(res.version, diag);
         }
