@@ -127,12 +127,22 @@ function strByteLen(s: string): number {
 
 // responses from Imandra
 namespace response {
+  export type TextType = "plain" | "markdown";
+
+  export interface IRichText {
+    text: string;
+    type: TextType;
+  }
+
+  /// A single text message.
+  export type AnyText = string | IRichText;
+
   export interface IValid {
     kind: "valid";
     range: IRange;
     uri: string;
     version: number;
-    msg: string[];
+    msg: AnyText[];
   }
 
   type info_kind = "error" | "warning" | "invalid" | "hint";
@@ -142,7 +152,7 @@ namespace response {
     range: IRange;
     uri: string;
     version: number;
-    msg: string;
+    msg: string | IRichText[];
   }
 
   export interface IAck {
@@ -177,11 +187,45 @@ namespace response {
   export type Res = IValid | IInfo | IAck | IResend | IVersion | IPong | IProgress;
 }
 
+function RichTextToMarkedString(x: response.AnyText): string | vscode.MarkdownString {
+  if (typeof x === "string") {
+    return x;
+  } else {
+    return new vscode.MarkdownString(x.text);
+  }
+}
+
+/** Convert an input text object into a (possibly rich) string */
+function InfoResToMarkedString(x: string | response.IRichText[]): string | vscode.MarkdownString {
+  if (typeof x === "string") {
+    return x;
+  } else {
+    const txt = x.map(x => x.text).join("\n");
+    if (x.findIndex(x => x.type !== "markdown") === -1) {
+      // all markdown
+      return new vscode.MarkdownString(txt);
+    } else {
+      return txt;
+    }
+  }
+}
+
+/** Convert an input text object into a string */
+function InfoResToString(x: string | response.IRichText[]): string {
+  if (typeof x === "string") {
+    return x;
+  } else {
+    // have to collapse to raw text
+    return x.map(x => x.text).join("\n");
+  }
+}
+
 /**
  * A document with its current list of diagnostics.
  */
 class DocState implements vscode.Disposable {
   private curDiags: vscode.Diagnostic[] = [];
+  private curDecorationsOutput: vscode.DecorationOptions[] = [];
   private curDecorationsSmile: vscode.DecorationOptions[] = [];
   private curDecorationsPuzzled: vscode.DecorationOptions[] = [];
   private curVersion: number;
@@ -206,15 +250,16 @@ class DocState implements vscode.Disposable {
   public setEditor(ed: vscode.TextEditor) {
     assert(this.doc === ed.document);
     if (this.editor) {
+      this.editor.setDecorations(this.server.decorationOutput, []);
       this.editor.setDecorations(this.server.decorationSmile, []);
       this.editor.setDecorations(this.server.decorationPuzzled, []);
     }
     this.editor = ed;
-    ed.setDecorations(this.server.decorationSmile, this.curDecorationsSmile);
-    ed.setDecorations(this.server.decorationPuzzled, this.curDecorationsPuzzled);
+    this.updateDecorations();
   }
   public resetEditor() {
     if (this.editor) {
+      this.editor.setDecorations(this.server.decorationOutput, []);
       this.editor.setDecorations(this.server.decorationSmile, []);
       this.editor.setDecorations(this.server.decorationPuzzled, []);
     }
@@ -228,6 +273,7 @@ class DocState implements vscode.Disposable {
       // had an editor but not anymore: cancel any lingering computation
       this.hadEditor = false;
       this.curDiags.length = 0;
+      this.curDecorationsOutput.length = 0;
       this.curDecorationsSmile.length = 0;
       this.curDecorationsPuzzled.length = 0;
       if (this.debug) console.log(`send doc_cancel for ${this.uri}:${this.version}`);
@@ -253,9 +299,12 @@ class DocState implements vscode.Disposable {
       this.server.diagnostics.set(this.uri, this.curDiags);
     }
   }
-  public addDecoration(version: number, kind: "smile" | "puzzled", d: vscode.DecorationOptions) {
+  public addDecoration(version: number, kind: "smile" | "puzzled" | "output", d: vscode.DecorationOptions) {
     if (version === this.version && this.hasEditor) {
       switch (kind) {
+        case "output":
+          this.curDecorationsOutput.push(d);
+          break;
         case "smile":
           this.curDecorationsSmile.push(d);
           break;
@@ -268,6 +317,7 @@ class DocState implements vscode.Disposable {
   }
   public updateDecorations() {
     if (this.editor) {
+      this.editor.setDecorations(this.server.decorationOutput, this.curDecorationsOutput);
       this.editor.setDecorations(this.server.decorationSmile, this.curDecorationsSmile);
       this.editor.setDecorations(this.server.decorationPuzzled, this.curDecorationsPuzzled);
     }
@@ -279,6 +329,7 @@ class DocState implements vscode.Disposable {
     this.curDecorationsSmile.length = 0;
     this.curDecorationsPuzzled.length = 0;
     if (this.editor) {
+      this.editor.setDecorations(this.server.decorationOutput, []);
       this.editor.setDecorations(this.server.decorationSmile, []);
       this.editor.setDecorations(this.server.decorationPuzzled, []);
     }
@@ -389,6 +440,7 @@ export class ImandraServerConn implements vscode.Disposable {
   private pingEpoch: number = 0;
   private lastPongEpoch: number = 0;
   public diagnostics: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection("imandra");
+  public decorationOutput: vscode.TextEditorDecorationType;
   public decorationSmile: vscode.TextEditorDecorationType;
   public decorationPuzzled: vscode.TextEditorDecorationType;
   private procDie: vscode.EventEmitter<WrongVersion | ForceClosed | undefined> = new vscode.EventEmitter();
@@ -473,6 +525,13 @@ export class ImandraServerConn implements vscode.Disposable {
       });
     this.decorationSmile = decoStyle("imandra-smile.png", "green");
     this.decorationPuzzled = decoStyle("imandra-wut.png", "orange");
+    // this one doesn't have icons
+    const outputColor = "lightblue";
+    this.decorationOutput = vscode.window.createTextEditorDecorationType({
+      border: `2px solid ${outputColor}`,
+      outlineColor: outputColor,
+      overviewRulerColor: outputColor,
+    });
   }
 
   public dispose(reason?: WrongVersion | ForceClosed) {
@@ -683,10 +742,8 @@ export class ImandraServerConn implements vscode.Disposable {
         const d = this.docs.get(res.uri);
         if (d) {
           const r = IRangeToRange(res.range);
-          const deco = {
-            range: r,
-            hoverMessage: res.msg,
-          };
+          const hoverMessage = res.msg.map(x => RichTextToMarkedString(x));
+          const deco = { range: r, hoverMessage };
           d.addDecoration(res.version, "smile", deco);
         }
         return;
@@ -697,10 +754,8 @@ export class ImandraServerConn implements vscode.Disposable {
         const d = this.docs.get(res.uri);
         if (d) {
           const r = IRangeToRange(res.range);
-          const deco = {
-            range: r,
-            hoverMessage: res.msg,
-          };
+          const hoverMessage = InfoResToMarkedString(res.msg);
+          const deco = { range: r, hoverMessage };
           d.addDecoration(res.version, "puzzled", deco);
         }
         return;
@@ -712,7 +767,8 @@ export class ImandraServerConn implements vscode.Disposable {
         if (d) {
           const r = IRangeToRange(res.range);
           const sev = vscode.DiagnosticSeverity.Error;
-          const diag = new vscode.Diagnostic(r, res.msg, sev);
+          const msg = InfoResToString(res.msg);
+          const diag = new vscode.Diagnostic(r, msg, sev);
           diag.source = "imandra";
           d.addDiagnostic(res.version, diag);
         }
@@ -725,7 +781,8 @@ export class ImandraServerConn implements vscode.Disposable {
         if (d) {
           const r = IRangeToRange(res.range);
           const sev = vscode.DiagnosticSeverity.Warning;
-          const diag = new vscode.Diagnostic(r, res.msg, sev);
+          const msg = InfoResToString(res.msg);
+          const diag = new vscode.Diagnostic(r, msg, sev);
           diag.source = "imandra";
           d.addDiagnostic(res.version, diag);
         }
@@ -736,11 +793,10 @@ export class ImandraServerConn implements vscode.Disposable {
         if (this.debug) console.log(`res (v${res.version}): warning! (range ${inspect(res.range)})`);
         const d = this.docs.get(res.uri);
         if (d) {
-          const r = IRangeToRange(res.range);
-          const sev = vscode.DiagnosticSeverity.Information;
-          const diag = new vscode.Diagnostic(r, res.msg, sev);
-          diag.source = "imandra";
-          d.addDiagnostic(res.version, diag);
+          const range = IRangeToRange(res.range);
+          const hoverMessage = InfoResToMarkedString(res.msg);
+          const deco: vscode.DecorationOptions = { range, hoverMessage };
+          d.addDecoration(res.version, "output", deco);
         }
         return;
       }
