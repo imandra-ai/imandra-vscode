@@ -1,6 +1,8 @@
 
+use nvm - and configure to automatically load from `.nvmrc` file
+
 - `npm install`
-- `npm build`
+- `npm run build`
 
 debug locally:
 - `npm run build` (caution with tslint…)
