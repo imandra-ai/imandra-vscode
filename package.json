@@ -176,8 +176,8 @@
         },
         "imandra.path.switch": {
           "type": "string",
-          "default": "/usr/local/var/imandra",
-          "description": "The path to where imandra-merlin is configured."
+          "default": "",
+          "description": "The path to the switch of the project."
         },
         "imandra.path.rtop": {
           "type": "string",
