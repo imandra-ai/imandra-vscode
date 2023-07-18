@@ -1,4 +1,14 @@
+## 0.5.1
+
+Working with user and imandra switches for merlin reader extension.
+
+## 0.5.0
+
+Adding LICENSE.
+
 ## 0.4.9
+
+Adding interactive button to check buffer on status bar.
 
 ## 0.4.8
 
