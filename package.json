@@ -3,7 +3,7 @@
   "name": "iml-vscode",
   "displayName": "Imandra IDE",
   "description": "Imandra (ReasonML/OCaml) reasoning studio",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "publisher": "aestheticintegration",
   "bugs": {
     "url": "https://github.com/aestheticintegration/iml-vscode/issues"
@@ -111,7 +111,7 @@
         },
         "imandra.path.merlin": {
           "type": "string",
-          "default": "merlin",
+          "default": "ocamlmerlin",
           "description": "The path to the `ocamlmerlin` binary."
         },
         "imandra.path.imandra-vscode-server": {

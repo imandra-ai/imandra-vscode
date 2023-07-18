@@ -1,3 +1,7 @@
+## 0.5.2
+
+Correcting default merlin executable name.
+
 ## 0.5.1
 
 Working with user and imandra switches for merlin reader extension.
